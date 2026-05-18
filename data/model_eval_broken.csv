@@ -1,0 +1,301 @@
+prompt_id,category,prompt_preview,model_a,model_b,model_a_quality_score,model_b_score,model_a_format_score,model_b_format_score,model_a_latency_sec,model_b_latency_sec,model_a_cost_usd,model_b_cost_usd,model_a_refused,model_b_refused,regression_flag,improvement_flag
+EVAL-0001,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,84,88,100,1.29,0.8,0.009,0.0045,NO,NO,NO,NO
+EVAL-0002,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,68,90,100,97,1.04,0.88,0.0093,0.0033,NO,NO,NO,YES
+EVAL-0003,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,98,84,92,1.96,1.14,0.0111,0.0048,NO,NO,NO,NO
+EVAL-0004,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,98,97,92,2.17,1.02,0.0086,0.0051,NO,NO,NO,NO
+EVAL-0005,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,90,78,98,1.93,0.87,0.0139,0.0059,NO,NO,NO,YES
+EVAL-0006,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,71,83,93,1.85,0.7,0.0146,0.0021,NO,NO,YES,NO
+EVAL-0007,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,91,76,100,2.31,0.73,0.0084,0.0039,NO,NO,NO,YES
+EVAL-0008,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,87,87,96,2.39,0.75,0.012,0.0022,NO,NO,NO,NO
+EVAL-0009,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,70,92,88,92,1.97,0.86,0.0107,0.0039,YES,NO,NO,YES
+EVAL-0010,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,88,87,100,2.8,0.98,0.0096,0.004,NO,NO,NO,NO
+EVAL-0011,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,67,100,86,84,1.9,0.82,0.0124,0.0032,NO,NO,NO,YES
+EVAL-0012,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,99,90,100,1.91,0.97,0.0141,0.004,NO,YES,NO,YES
+EVAL-0013,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,78,95,100,1.19,0.92,0.0134,0.0028,NO,NO,NO,NO
+EVAL-0014,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,83,87,100,1.41,1.3,0.0134,0.0059,NO,NO,NO,NO
+EVAL-0015,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,58,78,95,1.4,0.89,0.0141,0.0035,NO,NO,YES,NO
+EVAL-0016,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,80,86,88,2.03,1.05,0.0135,0.0022,NO,NO,NO,NO
+EVAL-0017,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,85,79,90,1.7,0.64,0.0125,0.0053,NO,YES,NO,NO
+EVAL-0018,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,95,90,93,1.96,0.88,0.0129,0.0023,NO,NO,NO,YES
+EVAL-0019,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,72,94,89,92,0.87,1.22,0.014,0.0023,NO,NO,NO,YES
+EVAL-0020,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,91,88,92,2.19,0.47,0.0124,0.0053,NO,NO,NO,NO
+EVAL-0021,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,71,87,94,97,1.74,0.78,0.0114,0.0042,NO,NO,NO,YES
+EVAL-0022,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,83,84,94,1.36,1.09,0.0119,0.0028,NO,NO,NO,NO
+EVAL-0023,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,85,73,79,1.49,1.14,0.0093,0.004,NO,NO,NO,NO
+EVAL-0024,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,85,85,97,2.04,0.69,0.0111,0.0032,NO,NO,NO,NO
+EVAL-0025,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,100,78,95,2.13,0.91,0.0109,0.0041,NO,NO,NO,YES
+EVAL-0026,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,82,95,85,1.36,0.84,0.0144,0.0056,NO,NO,NO,NO
+EVAL-0027,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,71,100,78,99,2.21,0.83,0.0141,0.0047,NO,NO,NO,YES
+EVAL-0028,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,91,80,100,2.04,0.76,0.009,0.0038,NO,NO,NO,NO
+EVAL-0029,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,88,82,94,2.06,0.82,0.0135,0.0027,NO,NO,NO,NO
+EVAL-0030,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,91,81,89,1.73,0.86,0.0145,0.0039,NO,NO,NO,YES
+EVAL-0031,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,85,89,94,1.71,1.14,0.0141,0.004,NO,NO,NO,NO
+EVAL-0032,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,72,89,89,92,1.75,0.78,0.0138,0.0052,NO,NO,NO,YES
+EVAL-0033,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,100,95,96,1.4,0.66,0.0114,0.003,NO,NO,NO,YES
+EVAL-0034,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,88,83,98,2.14,1.06,0.01,0.0052,NO,NO,NO,YES
+EVAL-0035,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,87,84,100,1.84,0.84,0.0148,0.0042,NO,NO,NO,NO
+EVAL-0036,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,80,91,88,1.77,0.33,0.0096,0.0039,NO,NO,NO,NO
+EVAL-0037,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,84,88,100,1.41,0.77,0.0146,0.0039,NO,NO,NO,NO
+EVAL-0038,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,93,88,91,1.9,0.76,0.0113,0.0024,YES,NO,NO,YES
+EVAL-0039,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,100,89,91,2.05,1.04,0.0147,0.0027,NO,NO,NO,YES
+EVAL-0040,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,72,96,88,1.45,0.42,0.0117,0.0021,NO,NO,YES,NO
+EVAL-0041,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,99,79,99,1.15,0.4,0.0114,0.0047,NO,YES,NO,YES
+EVAL-0042,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,79,88,92,1.26,1.14,0.0089,0.0057,NO,NO,NO,NO
+EVAL-0043,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,76,91,91,1.22,0.82,0.0087,0.0047,NO,NO,YES,NO
+EVAL-0044,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,92,93,95,2.22,1.12,0.0117,0.0051,NO,NO,NO,NO
+EVAL-0045,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,79,82,88,1.51,1.04,0.0082,0.0028,NO,NO,NO,NO
+EVAL-0046,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,85,85,95,1.92,0.72,0.0144,0.0043,NO,NO,NO,NO
+EVAL-0047,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,86,94,91,1.82,0.9,0.0134,0.0052,NO,NO,NO,NO
+EVAL-0048,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,97,91,91,1.43,1.02,0.0108,0.0034,NO,NO,NO,YES
+EVAL-0049,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,79,91,93,2.12,0.29,0.0137,0.0024,NO,NO,NO,NO
+EVAL-0050,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,85,85,95,2.04,0.79,0.0082,0.0048,NO,NO,NO,NO
+EVAL-0051,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,94,91,100,1.19,0.95,0.0104,0.0035,NO,NO,NO,YES
+EVAL-0052,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,79,93,88,1.85,1.19,0.0119,0.0026,NO,NO,NO,NO
+EVAL-0053,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,98,89,93,1.34,1.06,0.0101,0.0022,NO,NO,NO,YES
+EVAL-0054,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,92,88,100,1.45,1.04,0.0147,0.0041,NO,YES,NO,NO
+EVAL-0055,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,89,92,86,1.6,0.66,0.0111,0.002,NO,NO,NO,NO
+EVAL-0056,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,89,96,100,1.74,1.12,0.0135,0.0033,NO,NO,NO,NO
+EVAL-0057,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,98,80,100,1.16,1.07,0.0093,0.0052,NO,NO,NO,NO
+EVAL-0058,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,69,86,90,86,1.81,0.76,0.0119,0.0027,NO,NO,NO,YES
+EVAL-0059,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,88,84,87,1.86,0.7,0.0125,0.0057,NO,NO,NO,NO
+EVAL-0060,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,75,79,81,94,2.14,0.94,0.0113,0.0021,NO,NO,NO,NO
+EVAL-0061,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,97,94,100,2.13,1.01,0.0081,0.0044,NO,NO,NO,NO
+EVAL-0062,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,93,86,96,1.54,1.18,0.0126,0.0047,NO,NO,NO,NO
+EVAL-0063,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,93,86,90,2.24,0.94,0.0086,0.0038,NO,NO,NO,YES
+EVAL-0064,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,88,84,86,2.29,0.95,0.0092,0.0058,NO,NO,NO,YES
+EVAL-0065,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,87,88,96,2.18,1.27,0.0101,0.0037,NO,NO,NO,YES
+EVAL-0066,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,96,91,100,1.88,1.24,0.0082,0.0048,NO,NO,NO,YES
+EVAL-0067,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,93,90,93,2.45,0.99,0.008,0.0027,NO,NO,NO,YES
+EVAL-0068,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,89,90,90,1.47,0.67,0.0092,0.003,NO,NO,NO,NO
+EVAL-0069,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,66,92,79,95,2.03,0.74,0.0131,0.0024,NO,NO,NO,YES
+EVAL-0070,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,93,90,90,1.76,1.0,0.0111,0.004,NO,NO,NO,YES
+EVAL-0071,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,71,88,93,87,1.56,1.02,0.0129,0.0025,NO,NO,NO,YES
+EVAL-0072,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,91,90,91,1.73,0.88,0.0134,0.0031,NO,NO,NO,YES
+EVAL-0073,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,97,94,90,1.93,1.01,0.014,0.0021,NO,NO,NO,YES
+EVAL-0074,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,84,88,86,2.0,1.06,0.0122,0.0026,NO,NO,NO,NO
+EVAL-0075,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,79,100,94,2.3,0.77,0.0146,0.005,NO,NO,NO,NO
+EVAL-0076,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,82,83,93,2.48,1.02,0.0109,0.0028,NO,NO,NO,NO
+EVAL-0077,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,98,86,94,1.75,1.02,0.0109,0.0023,NO,YES,NO,NO
+EVAL-0078,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,91,96,89,2.3,0.48,0.0107,0.0041,NO,NO,NO,NO
+EVAL-0079,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,64,75,92,91,1.8,0.82,0.0142,0.0023,NO,NO,NO,YES
+EVAL-0080,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,78,92,93,1.5,0.41,0.0145,0.0021,NO,NO,NO,NO
+EVAL-0081,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,97,100,96,89,1.2,0.59,0.0111,0.0036,NO,NO,NO,NO
+EVAL-0082,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,99,84,91,1.96,0.98,0.011,0.0051,NO,NO,NO,YES
+EVAL-0083,code_generation,Write a TypeScript interface for a paginated API response.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,98,80,94,1.61,0.76,0.0102,0.0045,NO,NO,NO,YES
+EVAL-0084,code_generation,Write a unit test for a function that validates email addresses.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,90,83,100,1.82,1.01,0.0129,0.0055,NO,NO,NO,NO
+EVAL-0085,code_generation,Explain what this regex does and rewrite it to be more readable: ^(?=.*[A-Z])(?=...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,75,81,85,100,1.6,0.82,0.0138,0.0036,NO,NO,NO,NO
+EVAL-0086,code_generation,Convert this callback-based Node.js function to use async/await.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,82,91,93,1.83,1.16,0.0098,0.0047,NO,NO,NO,NO
+EVAL-0087,code_generation,Write a GitHub Actions workflow that runs tests on pull requests.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,74,87,89,1.68,0.82,0.0127,0.0032,NO,NO,YES,NO
+EVAL-0088,code_generation,Implement a simple LRU cache in Python.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,87,90,88,1.75,1.27,0.0108,0.0058,NO,NO,NO,NO
+EVAL-0089,code_generation,Write a Python function that retries an HTTP request up to 3 times with exponent...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,72,96,89,93,2.66,0.78,0.0123,0.005,NO,NO,NO,YES
+EVAL-0090,code_generation,Refactor this SQL query to use a CTE instead of a subquery.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,84,98,96,1.72,0.85,0.0145,0.0039,NO,NO,NO,NO
+EVAL-0091,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,89,89,94,1.88,0.82,0.012,0.005,NO,NO,NO,NO
+EVAL-0092,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,90,96,91,2.76,0.97,0.0126,0.0027,NO,NO,NO,NO
+EVAL-0093,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,82,79,92,1.67,0.64,0.0083,0.0059,NO,NO,NO,NO
+EVAL-0094,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,93,78,87,2.05,0.8,0.01,0.0054,NO,NO,NO,NO
+EVAL-0095,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,86,81,82,1.78,0.9,0.0121,0.0037,YES,NO,NO,NO
+EVAL-0096,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,91,97,93,1.74,1.07,0.015,0.0053,NO,NO,NO,YES
+EVAL-0097,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,78,95,95,2.33,0.9,0.0082,0.004,NO,NO,NO,NO
+EVAL-0098,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,88,94,90,1.82,0.74,0.0139,0.0035,NO,NO,NO,NO
+EVAL-0099,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,83,87,86,1.24,1.2,0.0098,0.0036,NO,NO,NO,NO
+EVAL-0100,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,92,84,86,2.45,0.58,0.0124,0.0045,NO,NO,NO,NO
+EVAL-0101,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,84,94,95,1.6,1.02,0.0144,0.0021,NO,NO,NO,NO
+EVAL-0102,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,96,80,95,99,2.57,1.29,0.0112,0.0051,NO,NO,YES,NO
+EVAL-0103,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,89,92,90,1.7,0.9,0.0138,0.0048,NO,NO,NO,NO
+EVAL-0104,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,84,85,84,1.84,0.74,0.0143,0.0037,NO,NO,NO,NO
+EVAL-0105,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,82,91,99,1.28,1.14,0.0129,0.0048,NO,NO,NO,NO
+EVAL-0106,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,83,88,94,2.33,0.76,0.0144,0.003,NO,NO,NO,NO
+EVAL-0107,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,82,93,84,2.66,0.92,0.0102,0.0031,NO,NO,NO,NO
+EVAL-0108,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,81,90,90,2.32,1.63,0.0137,0.0038,NO,NO,NO,NO
+EVAL-0109,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,80,87,76,1.72,0.97,0.0098,0.0027,NO,NO,NO,NO
+EVAL-0110,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,78,90,78,1.43,0.83,0.0123,0.0059,NO,NO,NO,NO
+EVAL-0111,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,69,87,83,1.85,0.92,0.0086,0.006,NO,NO,YES,NO
+EVAL-0112,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,75,87,90,1.96,0.92,0.0098,0.0037,NO,NO,NO,NO
+EVAL-0113,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,98,68,100,92,1.93,0.7,0.0131,0.005,NO,NO,YES,NO
+EVAL-0114,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,89,98,86,1.26,0.99,0.0138,0.0024,NO,NO,NO,NO
+EVAL-0115,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,79,74,79,1.66,0.86,0.0088,0.005,NO,NO,NO,NO
+EVAL-0116,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,93,88,98,1.76,1.14,0.0124,0.0047,NO,NO,NO,YES
+EVAL-0117,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,90,96,76,1.66,0.8,0.014,0.0025,NO,NO,NO,NO
+EVAL-0118,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,94,97,80,1.21,1.13,0.0107,0.0025,NO,NO,NO,NO
+EVAL-0119,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,87,88,92,1.97,0.87,0.0103,0.0056,NO,NO,NO,NO
+EVAL-0120,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,81,87,70,1.61,0.92,0.0111,0.0024,NO,NO,NO,NO
+EVAL-0121,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,72,84,90,84,1.11,0.71,0.0124,0.0027,NO,NO,NO,YES
+EVAL-0122,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,85,87,90,2.11,1.18,0.0148,0.0045,NO,NO,NO,NO
+EVAL-0123,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,88,100,87,2.4,0.82,0.0123,0.0043,NO,NO,NO,NO
+EVAL-0124,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,90,82,92,2.03,0.63,0.0118,0.0057,NO,YES,NO,NO
+EVAL-0125,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,85,91,93,1.43,1.09,0.0136,0.0056,NO,NO,NO,NO
+EVAL-0126,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,83,93,83,1.56,0.64,0.0131,0.0055,NO,NO,NO,NO
+EVAL-0127,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,86,83,83,1.3,1.1,0.0114,0.0032,NO,NO,NO,NO
+EVAL-0128,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,86,86,85,1.14,0.59,0.0121,0.0039,NO,NO,NO,NO
+EVAL-0129,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,90,86,79,1.09,1.04,0.0145,0.0028,NO,NO,NO,NO
+EVAL-0130,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,75,91,87,2.03,0.82,0.009,0.0054,NO,NO,NO,NO
+EVAL-0131,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,84,80,90,2.32,0.75,0.0129,0.0059,NO,NO,NO,NO
+EVAL-0132,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,79,98,92,1.92,0.8,0.0111,0.0026,NO,NO,NO,NO
+EVAL-0133,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,78,93,99,1.62,1.23,0.0134,0.0036,NO,NO,NO,NO
+EVAL-0134,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,78,90,92,1.74,0.64,0.0101,0.0047,NO,NO,NO,NO
+EVAL-0135,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,79,83,91,1.79,0.96,0.0086,0.0025,NO,NO,NO,NO
+EVAL-0136,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,81,88,95,1.7,0.79,0.0102,0.0046,NO,NO,NO,NO
+EVAL-0137,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,95,84,88,1.46,0.78,0.0117,0.0039,NO,YES,NO,YES
+EVAL-0138,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,82,79,84,1.67,1.12,0.012,0.004,NO,NO,NO,NO
+EVAL-0139,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,84,92,79,2.23,1.2,0.0083,0.0033,NO,NO,NO,NO
+EVAL-0140,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,77,89,92,1.91,0.89,0.0095,0.0049,NO,NO,NO,NO
+EVAL-0141,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,100,94,91,1.83,0.99,0.0113,0.0058,NO,NO,NO,YES
+EVAL-0142,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,97,77,83,1.94,0.63,0.0144,0.003,NO,NO,NO,YES
+EVAL-0143,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,94,94,82,1.47,0.6,0.0132,0.0031,NO,NO,NO,NO
+EVAL-0144,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,72,87,92,2.35,0.82,0.0088,0.0052,NO,NO,YES,NO
+EVAL-0145,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,95,79,87,1.91,0.39,0.0091,0.0043,NO,NO,NO,YES
+EVAL-0146,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,75,91,97,1.78,0.86,0.0141,0.0042,NO,NO,NO,NO
+EVAL-0147,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,82,84,89,1.66,0.95,0.0132,0.0039,NO,YES,NO,NO
+EVAL-0148,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,74,82,91,2.11,0.69,0.011,0.0057,NO,NO,YES,NO
+EVAL-0149,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,76,93,83,1.87,0.88,0.0108,0.0024,NO,NO,NO,NO
+EVAL-0150,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,86,88,96,1.9,1.05,0.0114,0.0026,NO,NO,NO,NO
+EVAL-0151,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,80,89,85,1.91,0.8,0.0088,0.0039,NO,NO,NO,NO
+EVAL-0152,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,77,85,84,1.44,0.99,0.01,0.0039,NO,NO,YES,NO
+EVAL-0153,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,100,94,83,1.23,1.18,0.0134,0.006,NO,NO,NO,YES
+EVAL-0154,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,82,86,83,2.28,0.82,0.0136,0.0042,NO,NO,NO,NO
+EVAL-0155,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,76,91,88,2.14,0.79,0.0088,0.002,NO,NO,YES,NO
+EVAL-0156,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,68,86,84,2.54,0.69,0.0118,0.0026,NO,NO,YES,NO
+EVAL-0157,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,79,91,89,1.8,0.89,0.0113,0.003,YES,NO,NO,NO
+EVAL-0158,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,88,90,90,1.54,0.78,0.0116,0.0039,NO,NO,NO,NO
+EVAL-0159,summarization,Write a one-sentence summary of each section in this technical RFC.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,69,85,83,90,1.71,1.19,0.0105,0.0056,NO,NO,NO,YES
+EVAL-0160,summarization,Extract the three most important action items from this meeting transcript.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,98,85,92,1.99,0.83,0.0132,0.0034,NO,NO,NO,YES
+EVAL-0161,summarization,Summarize this incident report into three bullet points for the exec team.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,100,85,94,95,1.62,0.71,0.0145,0.005,NO,NO,YES,NO
+EVAL-0162,summarization,Condense this 500-word product spec into a one-paragraph executive summary.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,82,92,77,1.67,1.16,0.0117,0.0053,NO,NO,NO,NO
+EVAL-0163,summarization,Summarize the key risks from this vendor contract in plain English.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,87,82,87,1.68,0.68,0.0091,0.0052,NO,NO,NO,NO
+EVAL-0164,summarization,Create a TL;DR of this Slack thread for someone joining the conversation late.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,88,100,93,1.62,1.12,0.0136,0.0047,NO,NO,NO,NO
+EVAL-0165,summarization,Summarize the differences between REST and GraphQL for a non-technical stakehold...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,97,92,85,95,1.65,0.8,0.012,0.0051,NO,NO,NO,NO
+EVAL-0166,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,79,76,76,1.87,1.01,0.0139,0.0045,NO,YES,YES,NO
+EVAL-0167,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,66,86,79,1.91,1.31,0.0088,0.0028,YES,YES,YES,NO
+EVAL-0168,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,97,72,85,65,1.91,0.91,0.0127,0.0053,NO,NO,YES,NO
+EVAL-0169,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,77,83,64,1.3,0.66,0.0129,0.0038,YES,NO,NO,NO
+EVAL-0170,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,71,86,79,2.37,1.19,0.0121,0.0045,NO,NO,YES,NO
+EVAL-0171,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,77,93,77,1.42,0.81,0.0086,0.0031,NO,NO,NO,NO
+EVAL-0172,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,73,78,84,2.28,1.11,0.0091,0.003,NO,NO,NO,NO
+EVAL-0173,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,95,61,98,76,1.54,0.7,0.0099,0.0028,NO,NO,YES,NO
+EVAL-0174,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,55,77,75,1.61,0.87,0.0142,0.0044,NO,NO,YES,NO
+EVAL-0175,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,98,79,86,62,2.05,1.14,0.0136,0.002,NO,NO,YES,NO
+EVAL-0176,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,81,93,73,1.76,0.87,0.013,0.002,NO,NO,NO,NO
+EVAL-0177,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,72,85,65,1.87,0.62,0.0137,0.0039,NO,NO,YES,NO
+EVAL-0178,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,74,82,79,2.21,1.04,0.0097,0.0054,NO,YES,NO,NO
+EVAL-0179,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,73,75,58,1.75,1.04,0.0101,0.0053,NO,NO,YES,NO
+EVAL-0180,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,100,78,88,60,1.48,0.83,0.0099,0.0034,NO,NO,YES,NO
+EVAL-0181,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,70,88,63,1.6,0.85,0.0092,0.0048,NO,NO,YES,NO
+EVAL-0182,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,100,71,91,80,1.91,0.9,0.0128,0.0051,NO,NO,YES,NO
+EVAL-0183,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,75,81,69,1.29,0.61,0.0149,0.0048,NO,NO,YES,NO
+EVAL-0184,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,73,77,67,1.36,1.06,0.0114,0.0039,NO,NO,NO,NO
+EVAL-0185,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,98,86,74,79,1.9,0.92,0.0106,0.0033,NO,NO,YES,NO
+EVAL-0186,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,74,85,63,2.34,1.15,0.0109,0.0022,NO,YES,NO,NO
+EVAL-0187,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,72,89,72,2.04,1.13,0.0106,0.0037,NO,NO,NO,NO
+EVAL-0188,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,75,77,79,69,1.95,0.47,0.0129,0.0045,NO,NO,NO,NO
+EVAL-0189,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,78,86,66,1.99,0.83,0.0093,0.0043,NO,NO,NO,NO
+EVAL-0190,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,68,83,76,1.85,1.05,0.0094,0.0041,NO,NO,YES,NO
+EVAL-0191,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,63,85,61,1.05,0.89,0.0112,0.0052,NO,NO,YES,NO
+EVAL-0192,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,62,82,75,1.75,1.22,0.0141,0.0034,NO,NO,YES,NO
+EVAL-0193,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,97,57,75,69,1.91,0.95,0.0108,0.0047,NO,YES,YES,NO
+EVAL-0194,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,68,91,77,1.96,0.6,0.0112,0.0043,NO,NO,YES,NO
+EVAL-0195,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,74,85,75,1.59,0.96,0.013,0.0039,NO,NO,YES,NO
+EVAL-0196,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,86,91,65,1.25,0.51,0.0126,0.0027,NO,YES,NO,NO
+EVAL-0197,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,66,73,81,1.82,0.99,0.0107,0.0046,NO,NO,YES,NO
+EVAL-0198,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,67,80,88,1.72,1.12,0.0089,0.0027,NO,YES,YES,NO
+EVAL-0199,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,95,70,76,71,2.03,0.7,0.0095,0.0031,NO,NO,YES,NO
+EVAL-0200,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,90,87,60,2.42,0.59,0.0105,0.0054,NO,NO,NO,NO
+EVAL-0201,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,80,89,62,1.57,0.92,0.0121,0.0049,NO,NO,YES,NO
+EVAL-0202,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,77,82,82,2.06,1.01,0.0124,0.0022,YES,NO,NO,NO
+EVAL-0203,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,74,90,71,1.61,0.91,0.0121,0.0028,YES,NO,YES,NO
+EVAL-0204,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,98,72,84,62,1.53,0.79,0.0132,0.0032,NO,NO,YES,NO
+EVAL-0205,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,66,79,72,1.55,1.01,0.0122,0.0041,NO,NO,YES,NO
+EVAL-0206,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,76,85,64,2.13,1.04,0.0113,0.004,NO,NO,NO,NO
+EVAL-0207,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,75,78,68,1.0,1.21,0.0136,0.0058,NO,YES,NO,NO
+EVAL-0208,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,71,77,84,1.2,1.05,0.0095,0.002,NO,NO,YES,NO
+EVAL-0209,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,94,77,86,76,1.69,1.06,0.013,0.0042,NO,YES,YES,NO
+EVAL-0210,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,77,89,66,1.48,1.25,0.0108,0.0038,NO,YES,NO,NO
+EVAL-0211,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,88,86,75,1.88,0.68,0.0139,0.0039,NO,NO,NO,NO
+EVAL-0212,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,64,94,71,0.66,1.17,0.0114,0.0031,NO,YES,YES,NO
+EVAL-0213,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,86,71,92,66,2.15,1.26,0.0103,0.0044,NO,NO,YES,NO
+EVAL-0214,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,66,86,62,1.71,1.26,0.0132,0.0048,NO,NO,YES,NO
+EVAL-0215,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,69,85,79,2.19,0.73,0.0106,0.0048,NO,NO,YES,NO
+EVAL-0216,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,95,67,82,76,1.64,0.53,0.0082,0.0052,NO,NO,YES,NO
+EVAL-0217,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,64,87,69,1.82,0.91,0.0144,0.0026,NO,NO,YES,NO
+EVAL-0218,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,66,84,70,1.97,0.71,0.0142,0.0021,NO,NO,YES,NO
+EVAL-0219,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,97,76,93,76,1.14,0.88,0.0105,0.0056,NO,NO,YES,NO
+EVAL-0220,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,82,86,86,2.14,1.02,0.0103,0.005,NO,NO,YES,NO
+EVAL-0221,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,96,66,83,77,2.19,1.14,0.0131,0.0027,NO,YES,YES,NO
+EVAL-0222,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,68,88,64,1.5,1.02,0.0127,0.006,NO,NO,YES,NO
+EVAL-0223,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,66,87,60,2.0,0.84,0.0113,0.0052,NO,NO,YES,NO
+EVAL-0224,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,79,79,65,1.59,0.86,0.0119,0.0048,NO,NO,NO,NO
+EVAL-0225,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,66,88,78,1.96,1.2,0.0083,0.004,NO,NO,YES,NO
+EVAL-0226,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,79,77,74,1.79,0.74,0.0086,0.0054,NO,NO,NO,NO
+EVAL-0227,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,94,73,66,2.08,0.84,0.0115,0.0033,NO,NO,NO,YES
+EVAL-0228,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,74,79,64,1.76,1.05,0.0127,0.0045,NO,NO,NO,NO
+EVAL-0229,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,72,84,69,1.51,0.61,0.0134,0.0029,NO,NO,NO,NO
+EVAL-0230,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,74,76,71,1.74,0.97,0.0082,0.0057,NO,NO,YES,NO
+EVAL-0231,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,75,80,75,1.72,0.83,0.0086,0.0034,NO,NO,NO,NO
+EVAL-0232,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,74,92,72,2.08,1.09,0.0093,0.005,NO,NO,NO,NO
+EVAL-0233,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,76,83,77,1.85,1.11,0.0123,0.0025,YES,NO,NO,NO
+EVAL-0234,customer_support,How do I handle a customer who is threatening to leave a negative review?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,58,79,73,1.24,0.82,0.0121,0.0037,NO,NO,YES,NO
+EVAL-0235,customer_support,Write an apology email for a service outage that lasted 4 hours.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,97,76,88,68,1.47,0.78,0.0088,0.0051,NO,NO,YES,NO
+EVAL-0236,customer_support,A customer says their payment failed but their card was charged. How should I re...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,92,67,90,73,1.61,1.27,0.0117,0.0039,NO,NO,YES,NO
+EVAL-0237,customer_support,How do I escalate a ticket that has been open for more than 5 business days?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,73,78,75,2.06,0.91,0.012,0.0034,NO,NO,YES,NO
+EVAL-0238,customer_support,Customer is asking for a refund outside our standard 30-day window. What are my ...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,83,75,53,1.75,0.74,0.0129,0.0054,NO,NO,NO,NO
+EVAL-0239,customer_support,Write a response to a customer who received the wrong item in their order.,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,93,64,89,76,2.21,0.94,0.014,0.0036,NO,YES,YES,NO
+EVAL-0240,customer_support,A user is locked out of their account and cannot receive the 2FA code. Walk me t...,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,88,67,85,74,1.49,0.82,0.0104,0.0031,NO,NO,YES,NO
+EVAL-0241,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,79,67,89,3.06,1.14,0.0135,0.0049,NO,NO,NO,NO
+EVAL-0242,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,62,84,84,83,1.76,1.05,0.013,0.0054,NO,NO,NO,YES
+EVAL-0243,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,97,72,97,1.52,0.89,0.008,0.0028,NO,NO,NO,YES
+EVAL-0244,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,79,77,99,1.14,1.13,0.0088,0.0024,NO,NO,NO,NO
+EVAL-0245,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,62,85,95,76,1.85,1.0,0.0127,0.0053,NO,NO,NO,YES
+EVAL-0246,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,82,81,94,1.9,0.44,0.009,0.0047,NO,NO,NO,NO
+EVAL-0247,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,90,82,66,100,1.34,0.91,0.0087,0.0055,NO,NO,NO,NO
+EVAL-0248,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,78,90,85,1.78,0.91,0.0128,0.0042,NO,NO,NO,NO
+EVAL-0249,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,84,94,90,1.8,0.74,0.0119,0.0043,NO,NO,NO,NO
+EVAL-0250,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,82,86,95,2.14,0.97,0.0125,0.002,NO,NO,NO,NO
+EVAL-0251,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,96,87,100,2.29,0.99,0.015,0.0057,NO,NO,NO,NO
+EVAL-0252,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,86,84,97,2.36,1.16,0.0092,0.0029,NO,NO,NO,NO
+EVAL-0253,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,81,82,80,1.77,0.59,0.0147,0.0032,NO,NO,NO,NO
+EVAL-0254,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,77,80,84,1.33,0.56,0.0131,0.0049,NO,NO,NO,NO
+EVAL-0255,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,85,83,96,2.2,0.72,0.0081,0.0038,NO,NO,NO,NO
+EVAL-0256,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,87,93,76,90,1.84,0.81,0.0121,0.0048,NO,NO,NO,NO
+EVAL-0257,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,68,93,86,92,1.88,1.01,0.0125,0.0054,NO,NO,NO,YES
+EVAL-0258,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,69,98,68,92,1.43,0.9,0.0125,0.0021,NO,NO,NO,YES
+EVAL-0259,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,91,71,80,2.31,0.74,0.0117,0.0039,NO,YES,NO,YES
+EVAL-0260,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,71,91,84,2.07,1.15,0.0128,0.0031,NO,NO,NO,NO
+EVAL-0261,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,99,68,96,1.67,0.93,0.0086,0.0025,NO,NO,NO,NO
+EVAL-0262,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,68,82,72,100,1.61,0.77,0.0112,0.0059,NO,NO,NO,YES
+EVAL-0263,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,71,81,77,91,1.93,1.16,0.0095,0.0022,NO,NO,NO,NO
+EVAL-0264,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,65,86,78,87,2.13,1.28,0.0141,0.0032,NO,NO,NO,YES
+EVAL-0265,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,72,86,89,87,1.53,0.85,0.0095,0.0026,NO,NO,NO,YES
+EVAL-0266,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,94,91,92,1.53,1.01,0.0145,0.0034,NO,NO,NO,YES
+EVAL-0267,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,80,90,100,1.67,0.94,0.0118,0.0029,NO,NO,NO,NO
+EVAL-0268,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,94,100,84,86,1.39,0.86,0.0127,0.0039,NO,NO,NO,NO
+EVAL-0269,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,93,79,98,2.23,0.69,0.0145,0.0046,NO,YES,NO,YES
+EVAL-0270,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,91,85,82,1.57,0.55,0.0127,0.0043,NO,NO,NO,NO
+EVAL-0271,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,93,81,81,1.72,0.76,0.0149,0.002,NO,NO,NO,YES
+EVAL-0272,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,67,84,82,90,1.73,0.9,0.0124,0.0054,NO,NO,NO,YES
+EVAL-0273,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,98,90,85,1.47,0.63,0.0121,0.0022,NO,NO,NO,YES
+EVAL-0274,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,76,76,89,1.52,0.77,0.0109,0.0032,NO,NO,YES,NO
+EVAL-0275,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,88,86,82,2.62,0.87,0.0118,0.0029,NO,NO,NO,NO
+EVAL-0276,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,93,88,86,1.06,0.97,0.011,0.003,NO,NO,NO,NO
+EVAL-0277,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,77,94,86,93,2.16,1.24,0.0131,0.0031,NO,NO,NO,YES
+EVAL-0278,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,68,100,75,86,2.29,1.1,0.0106,0.0035,NO,NO,NO,YES
+EVAL-0279,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,73,93,81,99,1.82,0.78,0.0136,0.0027,NO,NO,NO,YES
+EVAL-0280,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,82,100,85,89,1.95,0.73,0.0093,0.0044,NO,NO,NO,YES
+EVAL-0281,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,91,99,81,88,2.17,1.13,0.0099,0.0043,NO,NO,NO,NO
+EVAL-0282,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,72,73,79,91,2.32,0.93,0.0106,0.0058,NO,NO,NO,NO
+EVAL-0283,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,79,74,87,2.12,0.87,0.0132,0.0056,NO,NO,NO,NO
+EVAL-0284,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,80,93,84,89,1.57,0.75,0.0132,0.0052,NO,NO,NO,YES
+EVAL-0285,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,92,81,100,1.95,0.48,0.0134,0.0039,NO,NO,NO,YES
+EVAL-0286,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,89,97,85,99,2.32,0.75,0.01,0.0056,NO,NO,NO,NO
+EVAL-0287,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,76,96,85,96,1.63,1.09,0.0117,0.0023,NO,YES,NO,YES
+EVAL-0288,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,97,81,92,2.22,0.55,0.0143,0.004,NO,NO,NO,YES
+EVAL-0289,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,78,76,88,95,1.58,0.69,0.0102,0.0051,NO,NO,NO,NO
+EVAL-0290,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,71,100,86,94,1.44,0.86,0.0108,0.0029,NO,NO,NO,YES
+EVAL-0291,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,79,93,71,95,2.44,1.03,0.0099,0.0026,NO,NO,NO,YES
+EVAL-0292,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,77,77,99,1.69,1.06,0.0091,0.0059,NO,YES,NO,NO
+EVAL-0293,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,85,83,91,1.38,0.79,0.0131,0.0048,NO,NO,NO,YES
+EVAL-0294,rag_qa,"According to the security policy, which user roles can access PII data?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,83,77,67,100,1.34,0.91,0.0136,0.0042,NO,NO,NO,NO
+EVAL-0295,rag_qa,What does the SLA document specify as the response time for P1 incidents?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,81,81,86,99,1.96,0.97,0.0144,0.0043,NO,NO,NO,NO
+EVAL-0296,rag_qa,"Based on the architecture diagram description, how does data flow from ingestion...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,69,79,77,92,1.49,0.99,0.0139,0.0026,NO,NO,NO,NO
+EVAL-0297,rag_qa,"Based on the provided documentation, what are the rate limits for the API?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,85,86,79,92,1.91,0.97,0.0105,0.002,NO,NO,NO,NO
+EVAL-0298,rag_qa,"According to the policy document, what is the process for requesting a data dele...",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,75,83,89,98,1.43,1.05,0.0139,0.0025,NO,NO,NO,NO
+EVAL-0299,rag_qa,What does the onboarding guide say about setting up SSO with Okta?,gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,74,96,84,99,1.89,0.73,0.0108,0.0037,NO,YES,NO,YES
+EVAL-0300,rag_qa,"Based on the product changelog, what was added in version 2.4.0?",gpt-4o,nvidia/llama-3.3-nemotron-super-49b-v1,84,100,79,84,1.46,1.03,0.0092,0.0053,NO,YES,NO,YES

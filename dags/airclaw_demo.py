@@ -1,0 +1,210 @@
+"""
+AirClaw Demo DAG — NYC 311 Productivity Agent
+----------------------------------------------
+This pipeline runs every morning at 6am and does the work
+a city agency operations supervisor would spend 30–60 minutes
+doing manually: reviewing overnight 311 requests, finding SLA
+breaches, detecting complaint spikes, and drafting briefings.
+
+Three tasks:
+
+  [1] ingest_overnight  →  [2] nemoclaw_agent  →  [3] dispatch_briefings
+
+Task 1: Loads the upstream 311 feed, packages overnight context.
+Task 2: NemoClawOperator — agent finds breaches, detects spikes,
+        drafts supervisor briefings. Returns structured output.
+Task 3: Receives agent output and "dispatches" briefings
+        (prints them — in production this would be email/Slack).
+
+Demo commands:
+    Happy path:    cp data/new_nyc_311_clean.csv  data/new_nyc_311_upstream.csv
+    Failure beat:  cp data/new_nyc_311_broken.csv data/new_nyc_311_upstream.csv
+    Then:          airflow dags trigger new_airclaw_demo
+"""
+
+import json
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from new_nemoclaw_operator import NemoClawOperator
+
+# ── Config ─────────────────────────────────────────────────────────────────────
+
+UPSTREAM_FILE = os.path.join(
+    os.path.dirname(__file__), "..", "data", "new_nyc_311_upstream.csv"
+)
+
+REQUIRED_FIELDS = [
+    "unique_key", "created_date", "complaint_type", "borough", "district",
+    "agency", "supervisor", "status", "closed_date", "hours_open",
+    "sla_hours", "sla_breach",
+]
+
+AGENT_GOAL = (
+    "You are the morning operations agent for NYC 311. It is 6am. "
+    "Your job is to do the triage work that a supervisor would otherwise spend "
+    "30-60 minutes doing manually. "
+    "Step 1: Validate the schema — stop immediately if it has drifted. "
+    "Step 2: Find all open requests that have breached their SLA window. "
+    "Step 3: Detect any complaint types that spiked overnight vs the baseline. "
+    "Step 4: For each agency with SLA breaches, draft a ready-to-send morning "
+    "briefing addressed to that agency's supervisor — include specific case IDs, "
+    "districts, and recommended actions. "
+    "Step 5: Generate a one-paragraph duty manager summary of everything found. "
+    "Be decisive. Surface only what requires human attention. "
+    "The supervisor's first action of the day should be approving your work, "
+    "not building it."
+)
+
+# ── DAG ────────────────────────────────────────────────────────────────────────
+
+default_args = {
+    "owner":            "chanel",
+    "retries":          1,
+    "retry_delay":      timedelta(minutes=2),
+    "email_on_failure": False,
+}
+
+with DAG(
+    dag_id="new_airclaw_demo",
+    description="AirClaw — NYC 311 Productivity Agent (SLA monitoring + supervisor briefings)",
+    default_args=default_args,
+    start_date=datetime(2024, 1, 1),
+    schedule="0 6 * * *",   # 6am daily — or trigger manually for demo
+    catchup=False,
+    tags=["airclaw", "nemoclaw", "311", "productivity", "demo"],
+) as dag:
+
+    # ── Task 1: Ingest ─────────────────────────────────────────────────────────
+
+    def ingest_overnight(**kwargs):
+        """
+        Load the upstream 311 feed and summarize what came in overnight.
+        Pushes context to XCom so the agent knows what it's working with.
+        """
+        import csv, shutil
+        path = Path(UPSTREAM_FILE)
+
+        if not path.exists():
+            clean = path.parent / "new_nyc_311_clean.csv"
+            shutil.copy(clean, path)
+            print(f"[ingest] Initialized upstream file from new_nyc_311_clean.csv")
+
+        with open(path, newline="") as f:
+            rows = list(csv.DictReader(f))
+
+        now       = datetime.now()
+        overnight = now - timedelta(hours=24)
+
+        overnight_rows  = [r for r in rows if r.get("created_date","") >= overnight.strftime("%Y-%m-%dT%H:%M:%S")]
+        breach_count    = sum(1 for r in rows if r.get("sla_breach","") == "YES")
+        agencies        = list({r.get("agency","") for r in rows if r.get("agency","")})
+
+        context = {
+            "file_path":        str(path.resolve()),
+            "required_fields":  REQUIRED_FIELDS,
+            "total_rows":       len(rows),
+            "overnight_count":  len(overnight_rows),
+            "known_breaches":   breach_count,
+            "agencies":         agencies,
+            "as_of":            now.strftime("%B %d, %Y at %I:%M %p"),
+            "source":           "data.cityofnewyork.us/resource/erm2-nwe9",
+            "description":      "NYC 311 overnight triage — SLA monitoring and supervisor briefing pipeline",
+        }
+
+        print(f"[ingest] Total requests  : {len(rows)}")
+        print(f"[ingest] Overnight (24h) : {len(overnight_rows)}")
+        print(f"[ingest] SLA breaches    : {breach_count}")
+        print(f"[ingest] Agencies        : {agencies}")
+        print(f"[ingest] Context packaged — handing off to NemoClaw agent.")
+
+        kwargs["ti"].xcom_push(key="ingest_context", value=context)
+        return context
+
+    task_ingest = PythonOperator(
+        task_id="ingest_overnight",
+        python_callable=ingest_overnight,
+    )
+
+    # ── Task 2: NemoClaw Agent ─────────────────────────────────────────────────
+
+    task_agent = NemoClawOperator(
+        task_id="nemoclaw_agent",
+        goal=AGENT_GOAL,
+        context={
+            "file_path":       UPSTREAM_FILE,
+            "required_fields": REQUIRED_FIELDS,
+            "description":     "NYC 311 overnight triage — SLA monitoring and supervisor briefing pipeline",
+            "as_of":           datetime.now().strftime("%B %d, %Y at %I:%M %p"),
+        },
+        tools_module="new_airclaw_tools",
+        nim_api_key_env="NIM_API_KEY",
+        max_retries=3,
+    )
+
+    # ── Task 3: Dispatch Briefings ─────────────────────────────────────────────
+
+    def dispatch_briefings(**kwargs):
+        """
+        Receive the agent's structured output and dispatch the briefings.
+        For demo: prints each briefing with a clean separator.
+        In production: send via email API, post to Slack, write to ops dashboard.
+        """
+        ti     = kwargs["ti"]
+        result = ti.xcom_pull(task_ids="nemoclaw_agent")
+
+        TEAL  = "\033[38;5;43m"
+        GREEN = "\033[38;5;82m"
+        AMBER = "\033[38;5;214m"
+        BOLD  = "\033[1m"
+        RESET = "\033[0m"
+        LINE  = "═" * 62
+
+        print(f"\n{BOLD}{TEAL}{LINE}{RESET}")
+        print(f"{BOLD}{TEAL}  AirClaw — Briefings Ready for Dispatch{RESET}")
+        print(f"{BOLD}{TEAL}{LINE}{RESET}\n")
+
+        if not result:
+            print("[dispatch] No result from agent — check task 2 logs.")
+            return
+
+        data = result.get("data", {})
+
+        # Print the duty manager summary
+        summary = result.get("message", "")
+        if summary:
+            print(f"{TEAL}DUTY MANAGER SUMMARY:{RESET}")
+            print(f"  {summary}\n")
+
+        # Print each supervisor briefing
+        briefings_sent = data.get("briefings_sent", [])
+        all_breaches   = data.get("total_breaches", 0)
+        all_spikes     = data.get("total_spikes", 0)
+
+        print(f"{GREEN}✓ SLA breaches surfaced : {all_breaches}{RESET}")
+        print(f"{GREEN}✓ Complaint spikes      : {all_spikes}{RESET}")
+        print(f"{GREEN}✓ Briefings dispatched  : {len(briefings_sent)}{RESET}")
+
+        # In the demo the agent embeds briefings in its tool call output —
+        # they appear in the NemoClaw task logs in real time (the wow moment).
+        # Here we confirm dispatch and show structured XCom payload.
+        print(f"\n{TEAL}XCom payload (structured output):{RESET}")
+        print(json.dumps(data, indent=2)[:800])
+
+        print(f"\n{BOLD}{TEAL}{LINE}{RESET}")
+        print(f"{TEAL}  Pipeline complete. Supervisors have been briefed.{RESET}")
+        print(f"{TEAL}  No manual triage required this morning.{RESET}")
+        print(f"{BOLD}{TEAL}{LINE}{RESET}\n")
+
+        return result
+
+    task_dispatch = PythonOperator(
+        task_id="dispatch_briefings",
+        python_callable=dispatch_briefings,
+    )
+
+    # ── Wire ───────────────────────────────────────────────────────────────────
+    task_ingest >> task_agent >> task_dispatch
