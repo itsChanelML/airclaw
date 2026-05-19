@@ -93,12 +93,11 @@ class PrioritizeQueueInput(BaseModel):
 
 
 class DraftBriefingInput(BaseModel):
-    agency:            str
-    supervisor:        str
-    prioritized_queue: List[Dict[str, Any]] = []
-    spikes:            List[Dict[str, Any]] = []
-    overnight_count:   int = 0
-    as_of:             str = ""
+    agency:      str
+    supervisor:  str
+    file_path:   str
+    spikes:      List[Dict[str, Any]] = []
+    as_of:       str = ""
 
 
 class GenerateSummaryInput(BaseModel):
@@ -223,12 +222,7 @@ def check_sla_breaches(input: SLABreachInput) -> AgentResult:
             f"(supervisor: {top_agency[1]['supervisor']}). "
             f"Agencies affected: {list(agency_summary.keys())}."
         ),
-        data={
-            "breaches":  breaches[:5],   # cap to keep context lean
-            "by_agency": agency_summary,
-            "total":     len(breaches),
-            "agencies":  list(agency_summary.keys()),
-        },        
+        data={"breaches": breaches, "by_agency": agency_summary, "total": len(breaches), "agencies": list(agency_summary.keys())},
         tool="check_sla_breaches"
     )
 
@@ -411,23 +405,114 @@ def prioritize_queue(input: PrioritizeQueueInput) -> AgentResult:
 
 def draft_supervisor_briefing(input: DraftBriefingInput) -> AgentResult:
     """
-    Ready-to-send briefing. Reads like a senior colleague wrote it.
-    Supervisor approves in 90 seconds. That is the 47 minutes back.
+    Reads SLA breaches for the given agency directly from file_path,
+    prioritizes by severity and hours overdue, clusters by geography,
+    and writes a ready-to-send morning briefing.
+    Call with: agency, supervisor, file_path. That is all.
     """
     if not input.agency or not input.supervisor:
-        return AgentResult(status=AgentStatus.ESCALATE, message="Agency and supervisor required.", tool="draft_supervisor_briefing")
+        return AgentResult(
+            status=AgentStatus.ESCALATE,
+            message="Agency and supervisor name required to draft a briefing.",
+            tool="draft_supervisor_briefing"
+        )
 
-    as_of = input.as_of or datetime.now().strftime("%B %d, %Y at %I:%M %p")
-    queue = input.prioritized_queue
+    import csv as _csv
+    from pathlib import Path as _Path
+    from collections import defaultdict as _dd
+
+    # ── Load breaches for this agency from file ────────────────────────────────
+    path = _Path(input.file_path)
+    raw_breaches = []
+    if path.exists():
+        with open(path, newline="") as f:
+            for row in _csv.DictReader(f):
+                if row.get("sla_breach","").strip() != "YES":
+                    continue
+                if row.get("agency","").strip() != input.agency:
+                    continue
+                hours_open = row.get("hours_open","")
+                sla_hours  = row.get("sla_hours","")
+                overdue_by = ""
+                if hours_open and sla_hours:
+                    try:
+                        overdue_by = f"{round(float(hours_open)-float(sla_hours),1)}h overdue"
+                    except ValueError:
+                        pass
+                raw_breaches.append({
+                    "case_id":        row.get("unique_key",""),
+                    "complaint_type": row.get("complaint_type",""),
+                    "borough":        row.get("borough",""),
+                    "district":       row.get("district",""),
+                    "hours_open":     hours_open,
+                    "sla_hours":      sla_hours,
+                    "overdue_by":     overdue_by,
+                })
+
+    # ── Prioritize by composite score ──────────────────────────────────────────
+    max_hours = max((float(b["hours_open"]) for b in raw_breaches if b.get("hours_open")), default=1)
+    scored = []
+    for b in raw_breaches:
+        hours    = float(b.get("hours_open",0)) if b.get("hours_open") else 0
+        sla      = float(b.get("sla_hours",1))  if b.get("sla_hours")  else 1
+        ts       = hours / max(max_hours,1)
+        ss       = COMPLAINT_SEVERITY.get(b.get("complaint_type",""),3) / 10
+        oratio   = (hours - sla) / max(sla,1)
+        composite= (ts*0.5) + (ss*0.3) + (min(oratio,1)*0.2)
+        scored.append({**b, "_score": composite})
+    ranked_raw = sorted(scored, key=lambda x: x["_score"], reverse=True)
+
+    # ── Cluster by district ────────────────────────────────────────────────────
+    clusters = _dd(list)
+    for b in ranked_raw:
+        clusters[b.get("district","Unknown")].append(b)
+
+    queue = []
+    seen  = set()
+    for item in ranked_raw:
+        cid = item.get("case_id","")
+        if cid in seen:
+            continue
+        seen.add(cid)
+        ct       = item.get("complaint_type","")
+        district = item.get("district","")
+        borough  = item.get("borough","")
+        overdue  = item.get("overdue_by","overdue")
+        severity = COMPLAINT_SEVERITY.get(ct,3)
+        others   = [b for b in clusters.get(district,[])
+                    if b.get("case_id","") != cid and b.get("case_id","") not in seen]
+        cluster_note = ""
+        if others:
+            cluster_note = (f"{len(others)} other open case(s) in {district} — "
+                            f"single dispatch could cover all {1+len(others)}.")
+            for c in others:
+                seen.add(c.get("case_id",""))
+        if severity >= 9:   action = "Immediate field assignment required — health/safety risk."
+        elif severity >= 7: action = "Assign today. Owner notification required before close of business."
+        elif severity >= 5: action = "Queue for next available field unit."
+        else:               action = "Schedule during next routine patrol."
+        queue.append({
+            "rank":         len(queue)+1,
+            "case_id":      cid,
+            "complaint":    ct,
+            "location":     f"{district}, {borough}",
+            "overdue":      overdue,
+            "severity":     severity,
+            "action":       action,
+            "cluster_note": cluster_note,
+        })
+
+    # ── Write the briefing ─────────────────────────────────────────────────────
+    as_of  = input.as_of or datetime.now().strftime("%B %d, %Y at %I:%M %p")
     spikes = input.spikes
-    lines = []
+    lines  = []
 
     lines.append(f"SUBJECT: Morning Ops Briefing — {input.agency} | {as_of}")
     lines.append(f"TO: {input.supervisor}")
     lines.append("")
 
     if not queue:
-        lines.append(f"Good morning — your queue is clear. No SLA breaches as of {as_of}. Nothing requires action this morning.")
+        lines.append(f"Good morning — your queue is clear. No SLA breaches as of {as_of}.")
     else:
         lines.append(
             f"Good morning — you have {len(queue)} open request(s) past their SLA window "
@@ -439,34 +524,35 @@ def draft_supervisor_briefing(input: DraftBriefingInput) -> AgentResult:
         lines.append("PRIORITY ACTIONS:")
         lines.append("")
         for item in queue[:7]:
-            lines.append(f"  {item.get('rank', '')}. {item.get('complaint', '')} — {item.get('location', '')}")
-            lines.append(f"     Case: {item.get('case_id', '')} | {item.get('overdue', '')}")
-            lines.append(f"     → {item.get('action', '')}")
+            lines.append(f"  {item['rank']}. {item['complaint']} — {item['location']}")
+            lines.append(f"     Case: {item['case_id']} | {item['overdue']}")
+            lines.append(f"     → {item['action']}")
             if item.get("cluster_note"):
-                lines.append(f"     ℹ {item.get('cluster_note')}")
+                lines.append(f"     ℹ {item['cluster_note']}")
             lines.append("")
         if len(queue) > 7:
-            lines.append(f"  + {len(queue) - 7} additional breach(es) below priority threshold.")
+            lines.append(f"  + {len(queue)-7} additional breach(es) below priority threshold.")
             lines.append("")
 
     if spikes:
         lines.append("OVERNIGHT SPIKE ALERTS:")
         lines.append("")
         for s in spikes[:3]:
-            lines.append(f"  • {s.get('complaint_type', '')}: {s.get('overnight_count', '')} overnight vs avg {s.get('baseline_avg', '')}/day ({s.get('increase_pct', '')} above baseline, {s.get('severity', '')})")
+            lines.append(f"  • {s.get('complaint_type','')}: {s.get('overnight_count','')} overnight "
+                         f"vs avg {s.get('baseline_avg','')}/day ({s.get('increase_pct','')} above baseline)")
         lines.append("")
-        lines.append("  → Monitor for continued increase. Consider pre-positioning resources if pattern holds through midday.")
+        lines.append("  → Monitor for continued increase. Consider pre-positioning resources.")
         lines.append("")
     else:
         lines.append("OVERNIGHT VOLUME: Within normal range. No spikes detected.")
         lines.append("")
 
     if queue:
-        top = queue[0]
+        top           = queue[0]
         cluster_count = sum(1 for i in queue if i.get("cluster_note"))
         lines.append(
-            f"BOTTOM LINE: Start with {top.get('complaint', '')} in {top.get('location', '')} — "
-            f"highest priority in your queue and {top.get('overdue', 'overdue')}."
+            f"BOTTOM LINE: Start with {top['complaint']} in {top['location']} — "
+            f"highest priority in your queue and {top['overdue']}."
         )
         if cluster_count:
             lines.append(f"{cluster_count} cluster(s) identified — one dispatch may cover multiple open cases.")
@@ -528,7 +614,6 @@ TOOL_REGISTRY = {
     "validate_schema":           validate_schema,
     "check_sla_breaches":        check_sla_breaches,
     "detect_complaint_spike":    detect_complaint_spike,
-    "prioritize_queue":          prioritize_queue,
     "draft_supervisor_briefing": draft_supervisor_briefing,
     "generate_summary":          generate_summary,
 }
@@ -584,35 +669,26 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
-            "name": "prioritize_queue",
-            "description": "Takes the raw SLA breach list for ONE agency and produces a ranked, clustered action list. Ranks by hours overdue, complaint severity (health/safety first), and geographic clustering so one dispatch can cover multiple cases. Call once per agency BEFORE draft_supervisor_briefing. Pass the output ranked list into the briefing.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "agency":   {"type": "string", "description": "Agency code e.g. NYPD"},
-                    "breaches": {"type": "array",  "items": {"type": "object"}, "description": "The cases list from check_sla_breaches by_agency for this agency"},
-                    "spikes":   {"type": "array",  "items": {"type": "object"}, "description": "Spike records from detect_complaint_spike (optional)"}
-                },
-                "required": ["agency", "breaches"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "draft_supervisor_briefing",
-            "description": "Write a ready-to-send morning briefing for a specific agency supervisor. Ranked priorities, dispatch clustering, plain-English recommended actions, spike alerts. The supervisor reads it in 90 seconds and knows exactly what to do. Call AFTER prioritize_queue. Pass the ranked list from prioritize_queue as prioritized_queue. Call once per agency that has breaches.",
+            "description": (
+                "Write a ready-to-send morning briefing for ONE agency supervisor. "
+                "Reads breach data directly from file_path, prioritizes internally, "
+                "and produces a ranked action list with dispatch clustering. "
+                "Call once per agency that has SLA breaches. "
+                "Required fields: agency (string e.g. \'NYPD\'), "
+                "supervisor (string e.g. \'Lt. Marcus Webb\'), "
+                "file_path (string — same file path used in previous tool calls)."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "agency":            {"type": "string"},
-                    "supervisor":        {"type": "string"},
-                    "prioritized_queue": {"type": "array", "items": {"type": "object"}, "description": "The ranked list from prioritize_queue"},
-                    "spikes":            {"type": "array", "items": {"type": "object"}, "description": "Spike records from detect_complaint_spike"},
-                    "overnight_count":   {"type": "integer"},
-                    "as_of":             {"type": "string"}
+                    "agency":     {"type": "string", "description": "Agency code exactly as returned by check_sla_breaches e.g. NYPD"},
+                    "supervisor": {"type": "string", "description": "Supervisor name exactly as returned by check_sla_breaches e.g. Lt. Marcus Webb"},
+                    "file_path":  {"type": "string", "description": "Same file path used in validate_schema and check_sla_breaches"},
+                    "spikes":     {"type": "array", "items": {"type": "object"}, "description": "Optional spike records from detect_complaint_spike"},
+                    "as_of":      {"type": "string", "description": "Optional timestamp string for the briefing header"}
                 },
-                "required": ["agency", "supervisor"]
+                "required": ["agency", "supervisor", "file_path"]
             }
         }
     },

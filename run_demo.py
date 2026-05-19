@@ -131,19 +131,29 @@ def call_nim(api_key: str, messages: list, tool_schemas: list):
     }
     payload = {
         "model":       NIM_MODEL,
-        "messages":    messages,        # full history — do NOT trim here
+        "messages":    messages,
         "tools":       tool_schemas,
         "tool_choice": "auto",
         "max_tokens":  1024,
         "temperature": 0.1,
     }
-    try:
-        r = requests.post(NIM_ENDPOINT, headers=headers, json=payload, timeout=120)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        log_r(f"NIM error: {e}")
-        return None
+    # Retry up to 3 times with increasing timeout for slow NIM responses
+    timeouts = [120, 150, 180]
+    for attempt, timeout in enumerate(timeouts, 1):
+        try:
+            r = requests.post(NIM_ENDPOINT, headers=headers, json=payload, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.Timeout:
+            if attempt < len(timeouts):
+                log_a(f"NIM timeout (attempt {attempt}/{len(timeouts)}) — retrying with {timeouts[attempt]}s timeout…")
+                time.sleep(3)
+            else:
+                log_r(f"NIM error: timed out after {timeout}s")
+                return None
+        except Exception as e:
+            log_r(f"NIM error: {e}")
+            return None
 
 # ── Tool invocation ────────────────────────────────────────────────────────────
 
@@ -172,13 +182,20 @@ def run_agent(goal: str, context: dict, api_key: str):
     div()
 
     system_prompt = (
-        "You are NemoClaw. Call tools one at a time. Never write analysis or output as text."
-        "Rule 1: After every tool result, immediately call the next tool. No planning text."
-        "Rule 2: validate_schema → check_sla_breaches → detect_complaint_spike"
-        "Rule 3: Then call prioritize_queue for the top 2 agencies by breach count."
-        "Rule 4: Then call draft_supervisor_briefing for those same 2 agencies."
-        "Rule 5: Then call generate_summary. You are done only when generate_summary returns."
-        "Rule 6: If you are about to write text instead of calling a tool, stop and call the tool."
+    "You are NemoClaw. You have exactly 5 tools: "
+    "validate_schema, check_sla_breaches, detect_complaint_spike, "
+    "draft_supervisor_briefing, generate_summary. "
+    "There is NO prioritize_queue tool. Do not call it. It does not exist.\n\n"
+    "Call tools in this exact order, one at a time:\n"
+    "1. validate_schema — pass file_path and required_fields.\n"
+    "2. check_sla_breaches — pass file_path only.\n"
+    "3. detect_complaint_spike — pass file_path only.\n"
+    "4. draft_supervisor_briefing — call ONCE for NYPD: "
+    "pass agency='NYPD', supervisor='Lt. Marcus Webb', file_path=<same path>.\n"
+    "5. draft_supervisor_briefing — call ONCE for DSNY: "
+    "pass agency='DSNY', supervisor='Supt. Carlos Rivera', file_path=<same path>.\n"
+    "6. generate_summary — pass briefings=['Lt. Marcus Webb','Supt. Carlos Rivera'], overnight_total=300.\n\n"
+    "After each tool result, immediately call the next tool. No text between calls."
     )
 
     messages = [
