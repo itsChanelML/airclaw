@@ -1,5 +1,5 @@
 # AirClaw 🦾
-### Autonomous Productivity Agents with Apache Airflow + NemoClaw
+### Autonomous Self-Healing Agents with Apache Airflow + NemoClaw
 **AI DevSummit New York · June 9–10, 2026**
 
 > "What if your pipeline could think for itself?"
@@ -8,7 +8,7 @@
 
 ## What this is
 
-AirClaw pairs **Apache Airflow** (orchestration) with **NemoClaw** — the [OpenClaw](https://github.com/openclawai/openclaw) agent framework running `nvidia/llama-3.3-nemotron-super-49b-v1` via NVIDIA NIM — to create autonomous pipelines that reason, adapt, and fail gracefully without human intervention.
+AirClaw pairs **Apache Airflow** (orchestration) with **NemoClaw** — the [OpenClaw](https://github.com/openclawai/openclaw) agent framework running `nvidia/llama-3.3-nemotron-super-49b-v1` via NVIDIA NIM — to create self-healing pipelines that reason, adapt, and fail gracefully without human intervention.
 
 Two pipelines. Same framework. Two different problems.
 
