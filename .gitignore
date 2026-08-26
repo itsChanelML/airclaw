@@ -1,1 +1,8 @@
 .env
+
+# Airflow local state — created by ./run_airflow.sh
+airflow_home/
+
+# Python
+__pycache__/
+*.pyc

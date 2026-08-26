@@ -17,9 +17,9 @@ Task 3: Receives agent output and "dispatches" briefings
         (prints them — in production this would be email/Slack).
 
 Demo commands:
-    Happy path:    cp data/new_nyc_311_clean.csv  data/new_nyc_311_upstream.csv
-    Failure beat:  cp data/new_nyc_311_broken.csv data/new_nyc_311_upstream.csv
-    Then:          airflow dags trigger new_airclaw_demo
+    Happy path:    cp data/nyc_311_clean.csv  data/nyc_311_upstream.csv
+    Failure beat:  cp data/nyc_311_broken.csv data/nyc_311_upstream.csv
+    Then:          airflow dags trigger airclaw_demo
 """
 
 import json
@@ -27,15 +27,43 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# ── Path bootstrap ─────────────────────────────────────────────────────────────
+# Airflow parses DAG files in isolation, so make the repo importable regardless
+# of whether this file is being read from the repo itself or from a copy in
+# AIRFLOW_HOME/dags. Set AIRCLAW_HOME to override.
+import sys as _sys
+from pathlib import Path as _Path
+
+def _bootstrap_paths():
+    import os as _os
+    candidates = []
+    explicit = _os.environ.get("AIRCLAW_HOME")
+    if explicit:
+        candidates.append(_Path(explicit).expanduser())
+    here = _Path(__file__).resolve()
+    candidates.extend([here.parent.parent, *here.parents])
+    for base in candidates:
+        if (base / "airclaw_env.py").exists() or (base / "tools").is_dir():
+            for path in (base, base / "plugins", base / "tools"):
+                if path.is_dir() and str(path) not in _sys.path:
+                    _sys.path.insert(0, str(path))
+            return
+
+_bootstrap_paths()
+
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from new_nemoclaw_operator import NemoClawOperator
+from airflow.providers.standard.operators.python import PythonOperator
+
+from airclaw_env import data_file
+from rebase_data import describe_shift, rebase_csv
+from nemoclaw_operator import NemoClawOperator
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
-UPSTREAM_FILE = os.path.join(
-    os.path.dirname(__file__), "..", "data", "new_nyc_311_upstream.csv"
-)
+# Resolved through airclaw_env so the DAG works whether Airflow loads it from
+# the repo or from a copy in AIRFLOW_HOME.
+UPSTREAM_FILE = str(data_file("nyc_311_upstream.csv"))
+CLEAN_FILE    = str(data_file("nyc_311_clean.csv"))
 
 REQUIRED_FIELDS = [
     "unique_key", "created_date", "complaint_type", "borough", "district",
@@ -69,7 +97,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="new_airclaw_demo",
+    dag_id="airclaw_demo",
     description="AirClaw — NYC 311 Productivity Agent (SLA monitoring + supervisor briefings)",
     default_args=default_args,
     start_date=datetime(2024, 1, 1),
@@ -89,9 +117,14 @@ with DAG(
         path = Path(UPSTREAM_FILE)
 
         if not path.exists():
-            clean = path.parent / "new_nyc_311_clean.csv"
-            shutil.copy(clean, path)
-            print(f"[ingest] Initialized upstream file from new_nyc_311_clean.csv")
+            shutil.copy(CLEAN_FILE, path)
+            print("[ingest] Initialized upstream file from nyc_311_clean.csv")
+
+        # A real ingest pulls a fresh feed; this rebases the sample's timestamps
+        # onto now so the SLA and spike windows below mean something. Done in
+        # place so a manually swapped broken file stays broken for the demo.
+        shift = rebase_csv(path, path)
+        print(f"[ingest] Dates rebased {describe_shift(shift)} — newest request is now")
 
         with open(path, newline="") as f:
             rows = list(csv.DictReader(f))
@@ -140,9 +173,9 @@ with DAG(
             "description":     "NYC 311 overnight triage — SLA monitoring and supervisor briefing pipeline",
             "as_of":           datetime.now().strftime("%B %d, %Y at %I:%M %p"),
         },
-        tools_module="new_airclaw_tools",
+        tools_module="airclaw_tools",
         nim_api_key_env="NIM_API_KEY",
-        max_retries=3,
+        max_iterations=14,
     )
 
     # ── Task 3: Dispatch Briefings ─────────────────────────────────────────────

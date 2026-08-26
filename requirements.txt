@@ -1,5 +1,5 @@
 # AirClaw — NYC 311 Productivity Agent
-# Install: pip install -r new_requirements.txt
+# Install: pip3 install -r requirements.txt
 
 # Core agent dependencies
 apache-airflow>=2.8.0
@@ -12,6 +12,6 @@ python-dotenv>=1.0.0
 # Data handling (used in tools + data generation)
 # csv and collections are stdlib — no install needed
 
-# Optional: local NIM testing without full Airflow
-# Uncomment if running run_demo.py standalone only
-# requests is already listed above — covers NIM API calls
+# The standalone runners (run_demo.py, run_model_eval.py) need only
+# requests + pydantic + python-dotenv. Airflow is required solely for
+# the DAG path (./run_airflow.sh).

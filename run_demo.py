@@ -31,7 +31,14 @@ BROKEN    = DATA_DIR / "nyc_311_broken.csv"
 
 sys.path.insert(0, str(TOOLS_DIR))
 import airclaw_tools as tools_mod
-from airclaw_tools import TOOL_REGISTRY, TOOL_SCHEMAS, AgentStatus
+from airclaw_tools import (
+    TOOL_REGISTRY, TOOL_SCHEMAS, AgentStatus,
+    trim_for_history as trim_result_for_history,
+)
+
+sys.path.insert(0, str(ROOT))
+from airclaw_env import get_model, get_nim_key
+from rebase_data import describe_shift, rebase_csv
 
 import requests
 
@@ -45,7 +52,7 @@ GRAY   = "\033[38;5;245m"
 BOLD   = "\033[1m"
 RESET  = "\033[0m"
 
-NIM_MODEL    = "nvidia/llama-3.3-nemotron-super-49b-v1"
+NIM_MODEL    = get_model()
 NIM_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 MAX_ITER     = 14
 
@@ -56,11 +63,39 @@ REQUIRED_FIELDS = [
 ]
 
 DEFAULT_GOAL = (
-    "Run the NYC 311 morning triage pipeline. "
-    "Call tools in this exact order: validate_schema, check_sla_breaches, "
-    "detect_complaint_spike, then prioritize_queue and draft_supervisor_briefing "
-    "for the TOP 2 agencies by breach count only, then generate_summary. "
-    "Do not plan. Do not write text. Call the next tool immediately after each result."
+    "It is 6am. Run the NYC 311 morning triage: find every open request that has "
+    "breached its SLA window, check whether any complaint type spiked overnight, "
+    "and draft a ready-to-send briefing for the supervisor of each agency carrying "
+    "breaches — highest breach counts first, at most three agencies. "
+    "Finish with a one-paragraph duty manager summary."
+)
+
+# Tool selection and ordering are the agent's job — the goal above says what to
+# accomplish, not which functions to call. That is what makes --goal meaningful.
+SYSTEM_PROMPT = (
+    "You are NemoClaw, an autonomous operations agent for NYC 311.\n\n"
+    "How you work:\n"
+    "- Call validate_schema before anything else. If it ESCALATEs, stop.\n"
+    "- check_sla_breaches tells you which agencies have overdue cases and names "
+    "each agency's supervisor. Use those exact agency codes and supervisor names; "
+    "never invent one.\n"
+    "- draft_supervisor_briefing writes one briefing for one agency. Call it once "
+    "per agency you decide needs one, passing agency, supervisor, and the same "
+    "file_path used earlier. It reads the case data from the file itself.\n"
+    "- query_requests answers counting questions about the data — group requests "
+    "by complaint_type, borough, district, agency, status, or supervisor, with "
+    "optional filters like only_breaches. Use it for anything the other tools do "
+    "not directly answer, and base your answer on what it returns rather than "
+    "guessing.\n"
+    "- generate_summary is always your last call. Pass file_path, the list of "
+    "supervisors you briefed, and overnight_total. The run is NOT complete until "
+    "you call it — do not stop after the last briefing.\n\n"
+    "Rules: one tool call per turn. No prose between calls. If a tool returns "
+    "RETRY, read its message, fix your arguments, and call it again. Only call "
+    "tools that exist in your tool list.\n\n"
+    "If the goal is a question rather than the standard triage run, gather the "
+    "facts with query_requests and then reply with a short, direct answer — two "
+    "or three sentences citing the numbers. Do not narrate your reasoning."
 )
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -82,45 +117,6 @@ def log_gr(m):  print(f"{GRAY}{m}{RESET}")
 def log_status(s):
     c = GREEN if s == "SUCCESS" else (AMBER if s == "RETRY" else RED)
     print(f"{c}{BOLD}  Status        : {s}{RESET}")
-
-# ── Tool result trimmer ────────────────────────────────────────────────────────
-# Strips the nested data payload from tool results before adding to message
-# history. The agent only needs status + message to reason forward.
-# The tools read directly from the CSV file when they need actual case data.
-
-def trim_result_for_history(tool_name: str, result_json: str) -> str:
-    """
-    Keep status + message always.
-    For check_sla_breaches: also keep by_agency summary (agency name,
-    count, supervisor, cases list) so the agent knows what to pass to
-    prioritize_queue. Strip only the top-level breaches list.
-    For all other tools: strip data entirely.
-    """
-    try:
-        obj = json.loads(result_json)
-        data = obj.get("data", {})
-
-        if tool_name == "check_sla_breaches" and data:
-            # Keep by_agency but trim each agency cases to first 3
-            by_agency = data.get("by_agency", {})
-            trimmed_by_agency = {}
-            for agency, info in by_agency.items():
-                trimmed_by_agency[agency] = {
-                    "count":      info.get("count", 0),
-                    "supervisor": info.get("supervisor", ""),
-                    "cases":      info.get("cases", [])[:3],  # first 3 cases only
-                }
-            obj["data"] = {
-                "by_agency": trimmed_by_agency,
-                "total":     data.get("total", 0),
-                "agencies":  data.get("agencies", []),
-            }
-        else:
-            obj.pop("data", None)
-
-        return json.dumps(obj)
-    except Exception:
-        return result_json[:800]
 
 # ── NIM API ────────────────────────────────────────────────────────────────────
 
@@ -172,34 +168,72 @@ def invoke_tool(fn, args: dict):
             )
     return fn(args)
 
+def _fallback(missing, file_path: str, briefed=None, top_n: int = 2):
+    """
+    Safety net, not the happy path. The agent is expected to make these calls
+    itself; this only runs for the steps it left undone, and every line is
+    labeled so the logs never credit the agent with work it did not do.
+    """
+    from airclaw_tools import (
+        check_sla_breaches, draft_supervisor_briefing, generate_summary,
+        SLABreachInput, DraftBriefingInput, GenerateSummaryInput,
+    )
+
+    log_a(f"[fallback] Agent did not call: {', '.join(missing)}")
+    log_a("[fallback] Completing those steps deterministically — not agent output.")
+    div()
+
+    breaches  = check_sla_breaches(SLABreachInput(file_path=file_path))
+    by_agency = breaches.data.get("by_agency", {}) if breaches.data else {}
+    total     = breaches.data.get("total", 0) if breaches.data else 0
+    drafted   = list(briefed or [])
+
+    if "draft_supervisor_briefing" in missing:
+        ranked = sorted(by_agency.items(), key=lambda kv: kv[1].get("count", 0), reverse=True)
+        for agency, info in ranked[:top_n]:
+            log_a(f"[fallback] Running tool : {BOLD}draft_supervisor_briefing{RESET}{AMBER} ({agency})")
+            r = draft_supervisor_briefing(DraftBriefingInput(
+                agency=agency,
+                supervisor=info.get("supervisor", ""),
+                file_path=file_path,
+            ))
+            log_status(r.status.value)
+            if r.data.get("briefing"):
+                div()
+                log_t("  BRIEFING READY TO SEND:")
+                print()
+                for line in r.data["briefing"].split("\n"):
+                    print(f"  {GRAY}{line}{RESET}")
+                print()
+                div()
+                drafted.append(info.get("supervisor", agency))
+
+    if "generate_summary" in missing:
+        log_a(f"[fallback] Running tool : {BOLD}generate_summary{RESET}{AMBER}")
+        summary = generate_summary(GenerateSummaryInput(
+            file_path=file_path,
+            briefings=drafted,
+            overnight_total=total,
+        ))
+        log_status(summary.status.value)
+        log_gr(f"  Message       : {summary.message[:220]}")
+        div()
+        return summary
+
+    return None
+
+
 # ── Agent loop ─────────────────────────────────────────────────────────────────
 
-def run_agent(goal: str, context: dict, api_key: str):
+def run_agent(goal: str, context: dict, api_key: str, custom_goal: bool = False):
     banner("NemoClaw Agent — Morning Triage Starting")
     log_t(f"Goal       : {goal[:110]}…")
     log_t(f"Model      : {NIM_MODEL}")
     log_t(f"As of      : {datetime.now().strftime('%B %d, %Y at %I:%M %p')}")
     div()
 
-    system_prompt = (
-    "You are NemoClaw. You have exactly 5 tools: "
-    "validate_schema, check_sla_breaches, detect_complaint_spike, "
-    "draft_supervisor_briefing, generate_summary. "
-    "There is NO prioritize_queue tool. Do not call it. It does not exist.\n\n"
-    "Call tools in this exact order, one at a time:\n"
-    "1. validate_schema — pass file_path and required_fields.\n"
-    "2. check_sla_breaches — pass file_path only.\n"
-    "3. detect_complaint_spike — pass file_path only.\n"
-    "4. draft_supervisor_briefing — call ONCE for NYPD: "
-    "pass agency='NYPD', supervisor='Lt. Marcus Webb', file_path=<same path>.\n"
-    "5. draft_supervisor_briefing — call ONCE for DSNY: "
-    "pass agency='DSNY', supervisor='Supt. Carlos Rivera', file_path=<same path>.\n"
-    "6. generate_summary — pass briefings=['Lt. Marcus Webb','Supt. Carlos Rivera'], overnight_total=300.\n\n"
-    "After each tool result, immediately call the next tool. No text between calls."
-    )
-
     messages = [
-        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": (
             f"Goal: {goal}\n\n"
             f"Context:\n{json.dumps(context, indent=2)}\n\n"
@@ -208,6 +242,9 @@ def run_agent(goal: str, context: dict, api_key: str):
     ]
 
     final_result = None
+    called       = []
+    briefed      = []
+    answer       = ""
 
     for iteration in range(1, MAX_ITER + 1):
         log_p(f"[Iteration {iteration}] Calling NemoClaw…")
@@ -223,10 +260,17 @@ def run_agent(goal: str, context: dict, api_key: str):
         tool_calls = assistant_msg.get("tool_calls", [])
 
         if not tool_calls:
-            thought = assistant_msg.get("content", "")
+            answer = (assistant_msg.get("content") or "").strip()
             log_g("Agent completed reasoning — no further tool calls.")
-            if thought:
-                log_gr(f"Final thought: {thought[:300]}")
+            if answer:
+                # In audience-input mode the prose IS the deliverable, so show
+                # all of it rather than a truncated grey aside.
+                div()
+                log_t("  AGENT ANSWER:")
+                print()
+                for line in answer.split("\n"):
+                    print(f"  {GRAY}{line}{RESET}")
+                print()
             div()
             break
 
@@ -242,9 +286,16 @@ def run_agent(goal: str, context: dict, api_key: str):
             log_gr(f"  Input snippet : {json.dumps(args)[:180]}")
 
             if name not in TOOL_REGISTRY:
-                result_content  = json.dumps({"status": "ESCALATE", "message": f"Unknown tool: {name}"})
+                # RETRY, not ESCALATE — a hallucinated tool name is recoverable.
+                result_content  = json.dumps({
+                    "status":  "RETRY",
+                    "message": (
+                        f"No such tool: {name}. Available tools: "
+                        f"{', '.join(TOOL_REGISTRY.keys())}."
+                    ),
+                })
                 history_content = result_content
-                log_r(f"Unknown tool: {name}")
+                log_a(f"Unknown tool: {name} — returning RETRY so the agent can correct.")
             else:
                 result         = invoke_tool(TOOL_REGISTRY[name], args)
                 result_content = result.model_dump_json()
@@ -276,6 +327,10 @@ def run_agent(goal: str, context: dict, api_key: str):
                     print()
                     sys.exit(1)
 
+                if result.status == AgentStatus.SUCCESS:
+                    called.append(name)
+                    if name == "draft_supervisor_briefing":
+                        briefed.append(result.data.get("supervisor", ""))
                 final_result = result
 
             # Use trimmed content in history to keep context window lean
@@ -286,9 +341,39 @@ def run_agent(goal: str, context: dict, api_key: str):
             })
             div()
 
+        if "generate_summary" in called:
+            break
+
+    # ── Fallback ──────────────────────────────────────────────────────────────
+    # The briefings are the demo, and generate_summary is the final XCom payload
+    # the downstream Airflow task reads. If the agent skipped either, finish the
+    # run deterministically rather than dying on stage.
+    missing = [t for t in ("draft_supervisor_briefing", "generate_summary")
+               if t not in called]
+
+    # A custom goal that the agent answered in prose is complete as it stands —
+    # forcing briefings nobody asked for would be noise, not a safety net. The
+    # fallback exists for the standard pipeline, where the briefings ARE the job.
+    if missing and custom_goal and answer:
+        log_gr(f"Custom goal answered directly; skipped: {', '.join(missing)}.")
+        missing = []
+
+    if missing:
+        final_result = _fallback(missing, context["file_path"], briefed) or final_result
+
     # ── Final output ───────────────────────────────────────────────────────────
+    # A question-shaped goal ends on the answer, not a triage summary.
+    if custom_goal and answer and "draft_supervisor_briefing" not in called:
+        banner("NemoClaw Agent — Question Answered")
+        log_g("The agent gathered the facts with its tools and answered directly.")
+        log_gr(f"Tools used: {' → '.join(called)}")
+        print()
+        return
+
     if final_result:
         banner("NemoClaw Agent — Triage Complete")
+        if not missing:
+            log_gr(f"All steps executed by the agent: {' → '.join(called)}")
         log_g(f"Status  : {final_result.status.value}")
         log_g(f"Summary : {final_result.message[:500]}")
         if final_result.data:
@@ -311,18 +396,21 @@ def main():
                         help="Custom goal (audience input mode)")
     args = parser.parse_args()
 
+    # Rebase rather than copy: the sample's timestamps are frozen in the past,
+    # and the SLA/spike windows are all relative to now. See rebase_data.py.
+    source = BROKEN if args.broken else CLEAN
+    shift  = rebase_csv(source, UPSTREAM)
+
     if args.broken:
-        shutil.copy(BROKEN, UPSTREAM)
         print(f"{AMBER}[setup] Swapped in broken data — 'complaint_type' → 'complaint_category'{RESET}")
         print(f"{AMBER}[setup] ESCALATE beat active{RESET}\n")
     else:
-        shutil.copy(CLEAN, UPSTREAM)
-        print(f"{TEAL}[setup] Clean data loaded — {UPSTREAM.name}{RESET}\n")
+        print(f"{TEAL}[setup] Clean data loaded — {UPSTREAM.name}{RESET}")
+        print(f"{GRAY}[setup] Dates rebased {describe_shift(shift)} — newest request is now{RESET}\n")
 
-    api_key = os.environ.get("NIM_API_KEY")
-    if not api_key:
-        print(f"{RED}Error: NIM_API_KEY not set.{RESET}")
-        print(f"{GRAY}Get your key: https://build.nvidia.com{RESET}")
+    api_key, key_error = get_nim_key()
+    if key_error:
+        print(f"{RED}Error: {key_error}{RESET}")
         sys.exit(1)
 
     context = {
@@ -333,7 +421,12 @@ def main():
         "source":          "data.cityofnewyork.us/resource/erm2-nwe9",
     }
 
-    run_agent(goal=args.goal, context=context, api_key=api_key)
+    run_agent(
+        goal=args.goal,
+        context=context,
+        api_key=api_key,
+        custom_goal=(args.goal != DEFAULT_GOAL),
+    )
 
 
 if __name__ == "__main__":

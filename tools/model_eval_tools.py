@@ -34,6 +34,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from schema_diff import suggest_renames
+
 
 # ── Result contract ────────────────────────────────────────────────────────────
 
@@ -76,6 +78,11 @@ class CostAnalysisInput(BaseModel):
 class DraftMigrationReportInput(BaseModel):
     model_a:          str
     model_b:          str
+    file_path:        str = ""
+    monthly_volume:   int = 100000
+    # Optional overrides. Normally left empty — the tool recomputes from
+    # file_path rather than making the agent echo three nested payloads back
+    # through message history, which is what used to stall the run here.
     scores:           Dict[str, Any] = {}
     regressions:      Dict[str, Any] = {}
     cost_analysis:    Dict[str, Any] = {}
@@ -113,11 +120,7 @@ def validate_schema(input: ValidateSchemaInput) -> AgentResult:
     missing = [field for field in input.required_fields if field not in actual_fields]
 
     if missing:
-        suggestions = {}
-        for m in missing:
-            candidates = [a for a in actual_fields if m in a or a in m]
-            if candidates:
-                suggestions[m] = candidates[0]
+        suggestions = suggest_renames(input.required_fields, list(actual_fields), missing)
         diag = (
             f"Schema drift in eval file. "
             f"Missing required fields: {missing}. "
@@ -423,6 +426,45 @@ def draft_migration_report(input: DraftMigrationReportInput) -> AgentResult:
     regs      = input.regressions
     costs     = input.cost_analysis
     evaluated = input.evaluated_on
+
+    # ── Self-hydration ────────────────────────────────────────────────────────
+    # draft_supervisor_briefing in the 311 pipeline reads its data straight from
+    # the CSV; this tool now does the same. The agent passes file_path and two
+    # model names, and the analysis is recomputed here. Recomputation is cheap
+    # (three CSV passes) and every tool is idempotent by contract, so calling
+    # them again is safe.
+    if input.file_path:
+        if not scores:
+            r = score_comparison(ScoreComparisonInput(file_path=input.file_path))
+            if r.status == AgentStatus.SUCCESS:
+                scores = r.data
+        if not regs:
+            r = detect_regression(DetectRegressionInput(file_path=input.file_path))
+            if r.status == AgentStatus.SUCCESS:
+                regs = r.data
+        if not costs:
+            r = cost_analysis(CostAnalysisInput(
+                file_path=input.file_path,
+                monthly_volume=input.monthly_volume,
+            ))
+            if r.status == AgentStatus.SUCCESS:
+                costs = r.data
+
+    if not evaluated:
+        evaluated = scores.get("total_evaluated", 0)
+
+    # Better to escalate than to hand a VP a report built on nothing.
+    if not scores:
+        return AgentResult(
+            status=AgentStatus.ESCALATE,
+            message=(
+                "No eval data available to draft the migration report. "
+                "Pass file_path (preferred) or the scores/regressions/cost_analysis "
+                "payloads from the prior tool calls."
+            ),
+            tool="draft_migration_report"
+        )
+
     lines     = []
 
     # ── Header ────────────────────────────────────────────────────────────────
@@ -636,19 +678,18 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "draft_migration_report",
-            "description": "Write a go/no-go migration recommendation with evidence from all prior tool calls. VP of Engineering reads this in 5 minutes and makes a decision. Call after cost_analysis. Pass the full data from score_comparison, detect_regression, and cost_analysis.",
+            "description": "Write a go/no-go migration recommendation with evidence. VP of Engineering reads this in 5 minutes and makes a decision. Call after cost_analysis. Pass file_path plus the two model names — the report recomputes the analysis from the eval file itself. Do NOT echo the prior tool payloads back; they are not needed.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "model_a":        {"type": "string", "description": "Name of the current model e.g. gpt-4o"},
                     "model_b":        {"type": "string", "description": "Name of the candidate model"},
-                    "scores":         {"type": "object", "description": "Full data dict from score_comparison"},
-                    "regressions":    {"type": "object", "description": "Full data dict from detect_regression"},
-                    "cost_analysis":  {"type": "object", "description": "Full data dict from cost_analysis"},
+                    "file_path":      {"type": "string",  "description": "Same eval file path used in the previous tool calls"},
+                    "monthly_volume": {"type": "integer", "description": "Estimated monthly prompt volume for the cost projection (default 100000)"},
                     "evaluated_on":   {"type": "integer", "description": "Total number of prompts evaluated"},
                     "as_of":          {"type": "string"}
                 },
-                "required": ["model_a", "model_b"]
+                "required": ["model_a", "model_b", "file_path"]
             }
         }
     },
@@ -671,3 +712,48 @@ TOOL_SCHEMAS = [
         }
     }
 ]
+
+# ── History trimming ───────────────────────────────────────────────────────────
+# Same purpose as in airclaw_tools: keep the message history small enough that
+# the model keeps calling tools instead of stalling. Shared by run_model_eval.py
+# and the Airflow NemoClawOperator so both behave identically.
+
+import json as _json
+
+
+def trim_for_history(tool_name: str, result_json: str) -> str:
+    try:
+        obj  = _json.loads(result_json)
+        data = obj.get("data", {})
+
+        if tool_name == "score_comparison" and data:
+            by_cat = {}
+            for cat, d in data.get("by_category", {}).items():
+                by_cat[cat] = {
+                    "model_a_quality": d.get("model_a_quality"),
+                    "model_b_quality": d.get("model_b_quality"),
+                    "quality_delta":   d.get("quality_delta"),
+                    "winner":          d.get("winner"),
+                }
+            obj["data"] = {
+                "by_category":     by_cat,
+                "overall_delta":   data.get("overall_delta"),
+                "model_b_wins":    data.get("model_b_wins", []),
+                "model_a_wins":    data.get("model_a_wins", []),
+                "model_a_name":    data.get("model_a_name", ""),
+                "model_b_name":    data.get("model_b_name", ""),
+                "total_evaluated": data.get("total_evaluated", 0),
+            }
+        elif tool_name == "detect_regression" and data:
+            obj["data"] = {
+                "regressions":      data.get("regressions", [])[:3],
+                "refusal_spikes":   data.get("refusal_spikes", [])[:3],
+                "hold_categories":  data.get("hold_categories", []),
+                "clear_to_migrate": data.get("clear_to_migrate", False),
+            }
+        else:
+            obj.pop("data", None)
+
+        return _json.dumps(obj)
+    except Exception:
+        return result_json[:600]

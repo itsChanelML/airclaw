@@ -24,6 +24,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from schema_diff import suggest_renames
+
 
 # ── Result contract ────────────────────────────────────────────────────────────
 
@@ -80,16 +82,31 @@ class SLABreachInput(BaseModel):
 
 
 class SpikeDetectionInput(BaseModel):
-    file_path:       str
-    baseline_days:   int   = 7
-    spike_threshold: float = 0.40
-    hours_window:    int   = 24
+    file_path:            str
+    baseline_days:        int   = 7
+    spike_threshold:      float = 0.40
+    hours_window:         int   = 24
+    # Ignore types with fewer than this many overnight requests — percentage
+    # jumps off a near-zero baseline are noise, not signal.
+    min_overnight_volume: int   = 5
 
 
 class PrioritizeQueueInput(BaseModel):
     agency:   str
     breaches: List[Dict[str, Any]]
     spikes:   List[Dict[str, Any]] = []
+
+
+class QueryRequestsInput(BaseModel):
+    """Ad-hoc analytical question over the 311 feed."""
+    file_path:      str
+    group_by:       str  = "complaint_type"   # complaint_type|borough|district|agency|status|supervisor
+    only_breaches:  bool = False              # restrict to SLA-breached requests
+    only_open:      bool = False              # exclude Closed requests
+    borough:        str  = ""                 # optional filters
+    agency:         str  = ""
+    complaint_type: str  = ""
+    top_n:          int  = 5
 
 
 class DraftBriefingInput(BaseModel):
@@ -101,6 +118,10 @@ class DraftBriefingInput(BaseModel):
 
 
 class GenerateSummaryInput(BaseModel):
+    file_path:       str = ""
+    # Optional overrides. Normally left empty — the tool recomputes from
+    # file_path rather than requiring the agent to echo every breach record
+    # back through message history.
     all_breaches:    List[Dict[str, Any]] = []
     all_spikes:      List[Dict[str, Any]] = []
     briefings:       List[str]            = []
@@ -125,11 +146,7 @@ def validate_schema(input: ValidateSchemaInput) -> AgentResult:
     missing = [field for field in input.required_fields if field not in actual_fields]
 
     if missing:
-        suggestions = {}
-        for m in missing:
-            candidates = [a for a in actual_fields if m in a or a in m]
-            if candidates:
-                suggestions[m] = candidates[0]
+        suggestions = suggest_renames(input.required_fields, list(actual_fields), missing)
         diag = (
             f"Schema drift detected in upstream 311 feed. "
             f"Missing required fields: {missing}. "
@@ -265,6 +282,14 @@ def detect_complaint_spike(input: SpikeDetectionInput) -> AgentResult:
         if avg_daily == 0:
             avg_daily = 1
         increase = (overnight_vol - avg_daily) / avg_daily
+
+        # A rare complaint type going from 0.3/day to 4 overnight is a 1300%
+        # increase and operationally meaningless. Requiring a floor on absolute
+        # volume keeps the small-denominator noise out of the briefing so the
+        # real cluster is what a supervisor sees.
+        if overnight_vol < input.min_overnight_volume:
+            continue
+
         if increase >= input.spike_threshold:
             spikes.append({
                 "complaint_type":  ct,
@@ -274,7 +299,9 @@ def detect_complaint_spike(input: SpikeDetectionInput) -> AgentResult:
                 "severity":        "HIGH" if increase >= 1.0 else "MODERATE",
             })
 
-    spikes.sort(key=lambda x: float(x["increase_pct"].strip("%")), reverse=True)
+    # Rank by absolute excess volume — 13 requests against a 2.3/day baseline
+    # matters more than 4 against 0.3/day, even though the percentage is lower.
+    spikes.sort(key=lambda x: x["overnight_count"] - x["baseline_avg"], reverse=True)
 
     if not spikes:
         return AgentResult(
@@ -403,6 +430,109 @@ def prioritize_queue(input: PrioritizeQueueInput) -> AgentResult:
     )
 
 
+def query_requests(input: QueryRequestsInput) -> AgentResult:
+    """
+    Answer a counting question about the 311 feed: group requests by a field,
+    optionally filtered, and return the ranked counts.
+
+    Exists so the agent can answer questions the fixed pipeline tools do not
+    cover — "which complaint type is most common among the overdue cases",
+    "which borough has the most breaches". Without it, an off-script question
+    leaves the agent with no way to reach the data at all.
+    """
+    path = Path(input.file_path)
+    if not path.exists():
+        return AgentResult(
+            status=AgentStatus.ESCALATE,
+            message=f"File not found: {input.file_path}",
+            tool="query_requests"
+        )
+
+    VALID = ("complaint_type", "borough", "district", "agency", "status", "supervisor")
+    group_by = (input.group_by or "").strip()
+    if group_by not in VALID:
+        return AgentResult(
+            status=AgentStatus.RETRY,
+            message=f"group_by must be one of {list(VALID)}, got '{input.group_by}'.",
+            tool="query_requests"
+        )
+
+    counts  = defaultdict(int)
+    matched = 0
+    try:
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                if input.only_breaches and row.get("sla_breach", "").strip() != "YES":
+                    continue
+                if input.only_open and row.get("status", "").strip() == "Closed":
+                    continue
+                if input.borough and row.get("borough", "") != input.borough:
+                    continue
+                if input.agency and row.get("agency", "") != input.agency:
+                    continue
+                if input.complaint_type and row.get("complaint_type", "") != input.complaint_type:
+                    continue
+                counts[row.get(group_by, "") or "UNKNOWN"] += 1
+                matched += 1
+    except Exception as e:
+        return AgentResult(
+            status=AgentStatus.RETRY,
+            message=f"Error reading data: {e}",
+            tool="query_requests"
+        )
+
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[: max(input.top_n, 1)]
+
+    scope = []
+    if input.only_breaches: scope.append("SLA-breached")
+    if input.only_open:     scope.append("open")
+    if input.borough:       scope.append(f"in {input.borough}")
+    if input.agency:        scope.append(f"for {input.agency}")
+    if input.complaint_type: scope.append(f"of type {input.complaint_type}")
+    scope_text = " ".join(scope) or "all"
+
+    if not ranked:
+        return AgentResult(
+            status=AgentStatus.SUCCESS,
+            message=f"No {scope_text} requests matched that query.",
+            data={"group_by": group_by, "results": [], "total_matched": 0},
+            tool="query_requests"
+        )
+
+    top_label, top_count = ranked[0]
+    breakdown = ", ".join(f"{label}: {count}" for label, count in ranked)
+
+    # Call out ties explicitly. "DSNY has the most with 2" is misleading when
+    # NYPD also has 2, and that is exactly the kind of detail an audience
+    # catches. Ties are counted across the whole result set, not just top_n.
+    tied = sorted(label for label, count in counts.items() if count == top_count)
+    if len(tied) > 1:
+        others   = [t for t in tied if t != top_label]
+        top_text = (
+            f"Highest: {top_count} each, tied between {', '.join(tied)}"
+            if len(tied) > 2 else
+            f"Highest: {top_label} with {top_count}, tied with {others[0]}"
+        )
+    else:
+        top_text = f"Highest: {top_label} with {top_count}"
+
+    return AgentResult(
+        status=AgentStatus.SUCCESS,
+        message=(
+            f"{matched} {scope_text} request(s) grouped by {group_by}. "
+            f"{top_text}. "
+            f"Top {len(ranked)} — {breakdown}."
+        ),
+        data={
+            "group_by":      group_by,
+            "total_matched": matched,
+            "top":           {"label": top_label, "count": top_count, "tied_with": tied[1:]},
+            "results":       [{"label": l, "count": c} for l, c in ranked],
+        },
+        tool="query_requests"
+    )
+
+
 def draft_supervisor_briefing(input: DraftBriefingInput) -> AgentResult:
     """
     Reads SLA breaches for the given agency directly from file_path,
@@ -507,6 +637,28 @@ def draft_supervisor_briefing(input: DraftBriefingInput) -> AgentResult:
     spikes = input.spikes
     lines  = []
 
+    # ── Self-hydration ────────────────────────────────────────────────────────
+    # The agent passes spikes=[] because the spike payload is stripped from
+    # message history, which used to print "No spikes detected" in the briefing
+    # while the pipeline had just reported three. Recompute here, and keep only
+    # the complaint types this agency actually handles — DSNY does not need an
+    # alert about noise complaints.
+    if not spikes:
+        detected = detect_complaint_spike(SpikeDetectionInput(file_path=input.file_path))
+        if detected.status == AgentStatus.SUCCESS:
+            agency_types = set()
+            try:
+                with open(Path(input.file_path), newline="") as f:
+                    for row in csv.DictReader(f):
+                        if row.get("agency", "") == input.agency:
+                            agency_types.add(row.get("complaint_type", ""))
+            except Exception:
+                agency_types = set()
+            spikes = [
+                sp for sp in detected.data.get("spikes", [])
+                if not agency_types or sp.get("complaint_type", "") in agency_types
+            ]
+
     lines.append(f"SUBJECT: Morning Ops Briefing — {input.agency} | {as_of}")
     lines.append(f"TO: {input.supervisor}")
     lines.append("")
@@ -585,25 +737,81 @@ def draft_supervisor_briefing(input: DraftBriefingInput) -> AgentResult:
 
 
 def generate_summary(input: GenerateSummaryInput) -> AgentResult:
+    breaches = input.all_breaches
+    spikes   = input.all_spikes
+    total    = input.overnight_total
+
+    # ── Self-hydration ────────────────────────────────────────────────────────
+    # Without this, an agent that (correctly) does not echo the full breach list
+    # back gets a summary reading "No SLA breaches" directly after briefings for
+    # 29 of them streamed past. The duty manager summary has to agree with the
+    # briefings, so recompute from the source instead of trusting the arguments.
+    if input.file_path:
+        if not breaches:
+            r = check_sla_breaches(SLABreachInput(file_path=input.file_path))
+            if r.status == AgentStatus.SUCCESS:
+                breaches = r.data.get("breaches", [])
+        if not spikes:
+            r = detect_complaint_spike(SpikeDetectionInput(file_path=input.file_path))
+            if r.status == AgentStatus.SUCCESS:
+                spikes = r.data.get("spikes", [])
+
+    # The agent supplies overnight_total by hand and tends to pass the whole
+    # file size. Count what actually arrived overnight so the summary cannot
+    # claim 300 overnight requests when 48 came in.
+    overnight_count = None
+    feed_total      = None
+    if input.file_path:
+        try:
+            cutoff = datetime.now() - timedelta(hours=24)
+            with open(Path(input.file_path), newline="") as f:
+                rows_read = list(csv.DictReader(f))
+            feed_total      = len(rows_read)
+            overnight_count = sum(
+                1 for r in rows_read
+                if (r.get("created_date", "")[:19] or "") >= cutoff.strftime("%Y-%m-%dT%H:%M:%S")
+            )
+        except Exception:
+            overnight_count = None
+
     lines = [f"AirClaw morning run complete — {datetime.now().strftime('%Y-%m-%d %H:%M')}."]
-    if input.overnight_total:
-        lines.append(f"Processed {input.overnight_total} overnight 311 requests.")
-    if input.all_breaches:
-        agencies_hit = list({b.get("agency", "") for b in input.all_breaches})
-        lines.append(f"{len(input.all_breaches)} SLA breach(es) identified across {len(agencies_hit)} agency/agencies: {', '.join(agencies_hit)}.")
+    if overnight_count is not None:
+        lines.append(
+            f"Processed {overnight_count} request(s) received overnight "
+            f"({feed_total} in the feed)."
+        )
+    elif total:
+        lines.append(f"Processed {total} overnight 311 requests.")
+    if breaches:
+        agencies_hit = sorted({b.get("agency", "") for b in breaches if b.get("agency")})
+        lines.append(
+            f"{len(breaches)} SLA breach(es) identified across "
+            f"{len(agencies_hit)} agency/agencies: {', '.join(agencies_hit)}."
+        )
     else:
         lines.append("No SLA breaches. All open requests within response windows.")
-    if input.all_spikes:
-        top = input.all_spikes[0]
-        lines.append(f"{len(input.all_spikes)} complaint spike(s) detected. Largest: {top.get('complaint_type', '')} up {top.get('increase_pct', '')} overnight.")
+    if spikes:
+        top = spikes[0]
+        lines.append(
+            f"{len(spikes)} complaint spike(s) detected. Largest: "
+            f"{top.get('complaint_type', '')} up {top.get('increase_pct', '')} overnight."
+        )
     if input.briefings:
-        lines.append(f"{len(input.briefings)} supervisor briefing(s) drafted and ready to send: {', '.join(input.briefings)}.")
+        lines.append(
+            f"{len(input.briefings)} supervisor briefing(s) drafted and ready to send: "
+            f"{', '.join(input.briefings)}."
+        )
     lines.append("No manual triage required. Supervisors have been briefed. Pipeline standing by.")
     summary = " ".join(lines)
     return AgentResult(
         status=AgentStatus.SUCCESS,
         message=summary,
-        data={"summary": summary, "total_breaches": len(input.all_breaches), "total_spikes": len(input.all_spikes), "briefings_sent": input.briefings},
+        data={
+            "summary":        summary,
+            "total_breaches": len(breaches),
+            "total_spikes":   len(spikes),
+            "briefings_sent": input.briefings,
+        },
         tool="generate_summary"
     )
 
@@ -614,6 +822,7 @@ TOOL_REGISTRY = {
     "validate_schema":           validate_schema,
     "check_sla_breaches":        check_sla_breaches,
     "detect_complaint_spike":    detect_complaint_spike,
+    "query_requests":            query_requests,
     "draft_supervisor_briefing": draft_supervisor_briefing,
     "generate_summary":          generate_summary,
 }
@@ -669,6 +878,34 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "query_requests",
+            "description": (
+                "Answer a counting question about the 311 feed. Groups requests by one "
+                "field and returns ranked counts, with optional filters. Use this for any "
+                "question the other tools do not directly answer — for example the most "
+                "common complaint type among overdue cases (group_by='complaint_type', "
+                "only_breaches=true), or which borough carries the most breaches "
+                "(group_by='borough', only_breaches=true)."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path":      {"type": "string", "description": "Same file path used in the previous tool calls"},
+                    "group_by":       {"type": "string", "enum": ["complaint_type", "borough", "district", "agency", "status", "supervisor"], "description": "Field to group and count by"},
+                    "only_breaches":  {"type": "boolean", "description": "Restrict to requests that breached their SLA"},
+                    "only_open":      {"type": "boolean", "description": "Exclude closed requests"},
+                    "borough":        {"type": "string", "description": "Optional borough filter, e.g. BROOKLYN"},
+                    "agency":         {"type": "string", "description": "Optional agency filter, e.g. NYPD"},
+                    "complaint_type": {"type": "string", "description": "Optional complaint type filter"},
+                    "top_n":          {"type": "integer", "description": "How many groups to return (default 5)"}
+                },
+                "required": ["file_path", "group_by"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "draft_supervisor_briefing",
             "description": (
                 "Write a ready-to-send morning briefing for ONE agency supervisor. "
@@ -696,18 +933,55 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "generate_summary",
-            "description": "Produce a one-paragraph duty manager overview of everything the agent found and actioned. Call last — this is the final XCom output.",
+            "description": "Produce a one-paragraph duty manager overview of everything the agent found and actioned. Call last — this is the final XCom output. Pass file_path and the list of supervisors you briefed; breach and spike counts are recomputed from the file, so do not echo those payloads back.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "all_breaches":    {"type": "array", "items": {"type": "object"}},
-                    "all_spikes":      {"type": "array", "items": {"type": "object"}},
-                    "briefings":       {"type": "array", "items": {"type": "string"}},
-                    "overnight_total": {"type": "integer"},
+                    "file_path":       {"type": "string", "description": "Same file path used in the previous tool calls"},
+                    "briefings":       {"type": "array", "items": {"type": "string"}, "description": "Names of the supervisors you drafted briefings for"},
+                    "overnight_total": {"type": "integer", "description": "Total requests processed, e.g. 300"},
                     "original_goal":   {"type": "string"}
                 },
-                "required": []
+                "required": ["file_path"]
             }
         }
     }
 ]
+
+# ── History trimming ───────────────────────────────────────────────────────────
+# Tool results carry full nested payloads (every breach record, every case).
+# Feeding those back into message history burns the context window and makes
+# the model lose the thread. This keeps status + message always, plus the
+# by_agency summary the agent actually needs to pick its next call.
+#
+# Lives here rather than in the runner so run_demo.py and the Airflow
+# NemoClawOperator trim identically — the operator used to skip trimming
+# entirely, which is why the Airflow path degraded where the runner didn't.
+
+import json as _json
+
+
+def trim_for_history(tool_name: str, result_json: str) -> str:
+    try:
+        obj  = _json.loads(result_json)
+        data = obj.get("data", {})
+
+        if tool_name == "check_sla_breaches" and data:
+            trimmed_by_agency = {}
+            for agency, info in data.get("by_agency", {}).items():
+                trimmed_by_agency[agency] = {
+                    "count":      info.get("count", 0),
+                    "supervisor": info.get("supervisor", ""),
+                    "cases":      info.get("cases", [])[:3],
+                }
+            obj["data"] = {
+                "by_agency": trimmed_by_agency,
+                "total":     data.get("total", 0),
+                "agencies":  data.get("agencies", []),
+            }
+        else:
+            obj.pop("data", None)
+
+        return _json.dumps(obj)
+    except Exception:
+        return result_json[:800]

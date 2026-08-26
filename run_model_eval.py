@@ -20,7 +20,13 @@ BROKEN    = DATA_DIR / "model_eval_broken.csv"
 
 sys.path.insert(0, str(TOOLS_DIR))
 import model_eval_tools as tools_mod
-from model_eval_tools import TOOL_REGISTRY, TOOL_SCHEMAS, AgentStatus
+from model_eval_tools import (
+    TOOL_REGISTRY, TOOL_SCHEMAS, AgentStatus, trim_for_history,
+)
+
+sys.path.insert(0, str(ROOT))
+from airclaw_env import get_model, get_nim_key
+
 import requests
 
 TEAL   = "\033[38;5;43m"
@@ -32,7 +38,7 @@ GRAY   = "\033[38;5;245m"
 BOLD   = "\033[1m"
 RESET  = "\033[0m"
 
-NIM_MODEL    = "nvidia/llama-3.3-nemotron-super-49b-v1"
+NIM_MODEL    = get_model()
 NIM_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 MAX_ITER     = 10
 
@@ -44,6 +50,26 @@ REQUIRED_FIELDS = [
     "model_a_cost_usd", "model_b_cost_usd",
     "model_a_refused", "model_b_refused", "regression_flag",
 ]
+
+MONTHLY_VOLUME = 100_000
+TOTAL_PROMPTS  = 300
+
+
+def eval_models(path):
+    """
+    Read the two models under evaluation from the eval file itself.
+
+    The model the agent RUNS ON (NIM_MODEL) and the models it is EVALUATING are
+    different things. Conflating them meant the report could name one model in
+    the cost analysis and a different one in the summary.
+    """
+    import csv as _csv
+    try:
+        with open(path, newline="") as f:
+            row = next(_csv.DictReader(f))
+        return row.get("model_a", "Model A"), row.get("model_b", "Model B")
+    except Exception:
+        return "Model A", "Model B"
 
 SYSTEM_PROMPT = (
     "You are NemoClaw. Call tools one at a time. Never write text between tool calls. "
@@ -68,41 +94,6 @@ def log_gr(m):  print(f"{GRAY}{m}{RESET}")
 def log_status(s):
     c = GREEN if s == "SUCCESS" else (AMBER if s == "RETRY" else RED)
     print(f"{c}{BOLD}  Status        : {s}{RESET}")
-
-def trim_for_history(tool_name, result_json):
-    try:
-        obj  = json.loads(result_json)
-        data = obj.get("data", {})
-        if tool_name == "score_comparison" and data:
-            by_cat = {}
-            for cat, d in data.get("by_category", {}).items():
-                by_cat[cat] = {
-                    "model_a_quality": d.get("model_a_quality"),
-                    "model_b_quality": d.get("model_b_quality"),
-                    "quality_delta":   d.get("quality_delta"),
-                    "winner":          d.get("winner"),
-                }
-            obj["data"] = {
-                "by_category":     by_cat,
-                "overall_delta":   data.get("overall_delta"),
-                "model_b_wins":    data.get("model_b_wins", []),
-                "model_a_wins":    data.get("model_a_wins", []),
-                "model_a_name":    data.get("model_a_name", ""),
-                "model_b_name":    data.get("model_b_name", ""),
-                "total_evaluated": data.get("total_evaluated", 0),
-            }
-        elif tool_name == "detect_regression" and data:
-            obj["data"] = {
-                "regressions":      data.get("regressions", [])[:3],
-                "refusal_spikes":   data.get("refusal_spikes", [])[:3],
-                "hold_categories":  data.get("hold_categories", []),
-                "clear_to_migrate": data.get("clear_to_migrate", False),
-            }
-        else:
-            obj.pop("data", None)
-        return json.dumps(obj)
-    except Exception:
-        return result_json[:600]
 
 def call_nim(api_key, messages):
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -146,77 +137,77 @@ def invoke_tool(fn, args):
             )
     return fn(args)
 
-def _run_final_steps(messages, cost_data):
+def _deterministic_fallback(missing):
     """
-    Agent stops after cost_analysis — invoke final 2 steps directly.
-    cost_data is the FULL result.data (not trimmed) so $savings displays correctly.
+    Safety net for the live demo, NOT the happy path.
+
+    The agent is expected to call draft_migration_report and generate_summary
+    itself — the tools are self-hydrating now, so it only needs file_path and
+    the two model names. If the model stalls anyway (NIM hiccup, dropped tool
+    call), we still finish the run rather than dying on stage.
+
+    Every line this prints is labeled [fallback] so the logs never claim the
+    agent did something it did not do.
     """
     from model_eval_tools import (
         draft_migration_report, generate_summary,
         DraftMigrationReportInput, GenerateSummaryInput
     )
 
-    scores_data      = {}
-    regressions_data = {}
-
-    for msg in messages:
-        if msg.get("role") == "tool":
-            try:
-                obj  = json.loads(msg["content"])
-                data = obj.get("data", {})
-                if "by_category" in data:
-                    scores_data = data
-                elif "hold_categories" in data:
-                    regressions_data = data
-            except Exception:
-                pass
-
-    # Step 5
-    log_p("[Iteration 5] Calling NemoClaw…")
-    log_t(f"-> Calling tool  : {BOLD}draft_migration_report{RESET}{TEAL}")
-    r = draft_migration_report(DraftMigrationReportInput(
-        model_a="gpt-4o",
-        model_b="nvidia/llama-3.3-nemotron-super-49b-v1",
-        scores=scores_data,
-        regressions=regressions_data,
-        cost_analysis=cost_data,
-        evaluated_on=300,
-        as_of=datetime.now().strftime("%B %d, %Y"),
-    ))
-    log_status(r.status.value)
-    log_gr(f"  Message       : {r.message[:220]}")
-
-    if r.data.get("report"):
-        div()
-        log_t("  MIGRATION REPORT:")
-        print()
-        for line in r.data["report"].split("\n"):
-            print(f"  {GRAY}{line}{RESET}")
-        print()
-        div()
-
-    # Step 6
-    log_p("[Iteration 6] Calling NemoClaw…")
-    log_t(f"-> Calling tool  : {BOLD}generate_summary{RESET}{TEAL}")
-    s = generate_summary(GenerateSummaryInput(
-        recommendation=r.data.get("recommendation", ""),
-        model_a="gpt-4o",
-        model_b="nvidia/llama-3.3-nemotron-super-49b-v1",
-        total_evaluated=300,
-    ))
-    log_status(s.status.value)
-    log_gr(f"  Message       : {s.message[:220]}")
+    model_a, model_b = eval_models(str(UPSTREAM.resolve()))
+    log_a(f"[fallback] Agent did not call: {', '.join(missing)}")
+    log_a("[fallback] Completing these steps deterministically — not agent output.")
     div()
 
-    banner("NemoClaw Eval Agent — Analysis Complete")
-    log_g(f"Status  : {s.status.value}")
-    log_g(f"Summary : {s.message[:400]}")
+    rec = ""
+    if "draft_migration_report" in missing:
+        log_a(f"[fallback] Running tool : {BOLD}draft_migration_report{RESET}{AMBER}")
+        r = draft_migration_report(DraftMigrationReportInput(
+            model_a=model_a,
+            model_b=model_b,
+            file_path=str(UPSTREAM.resolve()),
+            monthly_volume=MONTHLY_VOLUME,
+        ))
+        log_status(r.status.value)
+        log_gr(f"  Message       : {r.message[:220]}")
+        stream_report(r)
+        rec = r.data.get("recommendation", "")
+
+    if "generate_summary" in missing:
+        log_a(f"[fallback] Running tool : {BOLD}generate_summary{RESET}{AMBER}")
+        s_res = generate_summary(GenerateSummaryInput(
+            recommendation=rec,
+            model_a=model_a,
+            model_b=model_b,
+            total_evaluated=TOTAL_PROMPTS,
+        ))
+        log_status(s_res.status.value)
+        log_gr(f"  Message       : {s_res.message[:220]}")
+        div()
+        return s_res
+
+    return None
+
+
+def stream_report(result):
+    """Print the migration report body — the beat where you stop talking."""
+    if not result.data.get("report"):
+        return
+    div()
+    log_t("  MIGRATION REPORT:")
     print()
+    for line in result.data["report"].split("\n"):
+        print(f"  {GRAY}{line}{RESET}")
+    print()
+    div()
+
 
 def run_agent(api_key):
     banner("NemoClaw Eval Agent — Model Migration Analysis Starting")
-    log_t(f"Comparing : gpt-4o  ->  {NIM_MODEL}")
-    log_t(f"Prompts   : 300 production samples across 4 task categories")
+    model_a, model_b = eval_models(str(UPSTREAM.resolve()))
+    log_t(f"Comparing : {model_a}  ->  {model_b}")
+    log_t(f"Agent runs on : {NIM_MODEL}")
+    log_t(f"Prompts   : {TOTAL_PROMPTS} production samples across 4 task categories")
     log_t(f"As of     : {datetime.now().strftime('%B %d, %Y at %I:%M %p')}")
     div()
 
@@ -226,16 +217,25 @@ def run_agent(api_key):
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": (
-            f"Analyze model migration from gpt-4o to nvidia/llama-3.3-nemotron-super-49b-v1.\n\n"
-            f"File: {fp}\n\n"
-            f"Call validate_schema with these EXACT required_fields — do not change them:\n{req_fields}\n\n"
-            "Then call these tools in order:\n"
-            "2. score_comparison (file_path only)\n"
-            "3. detect_regression (file_path only)\n"
-            "4. cost_analysis (file_path, monthly_volume=100000)\n\n"
+            f"Analyze a production model migration from {model_a} to {model_b}.\n\n"
+            f"Eval file: {fp}\n\n"
+            f"Call validate_schema with these EXACT required_fields — do not change them:\n"
+            f"{req_fields}\n\n"
+            "Then call these tools, one per turn, in this order:\n"
+            "2. score_comparison  — file_path only\n"
+            "3. detect_regression — file_path only\n"
+            f"4. cost_analysis     — file_path, monthly_volume={MONTHLY_VOLUME}\n"
+            f"5. draft_migration_report — model_a='{model_a}', model_b='{model_b}', "
+            f"file_path=<same path>, monthly_volume={MONTHLY_VOLUME}. "
+            "It reads the eval file itself, so do NOT pass the earlier tool payloads.\n"
+            "6. generate_summary  — pass the recommendation string from step 5, "
+            f"model_a, model_b, and total_evaluated.\n\n"
             "Start now. Call validate_schema."
         )},
     ]
+
+    called       = []
+    final_result = None
 
     for iteration in range(1, MAX_ITER + 1):
         log_p(f"[Iteration {iteration}] Calling NemoClaw…")
@@ -252,7 +252,7 @@ def run_agent(api_key):
 
         if not tool_calls:
             thought = assistant_msg.get("content", "")
-            log_g("Agent completed reasoning.")
+            log_g("Agent completed reasoning — no further tool calls.")
             if thought:
                 log_gr(f"Final thought: {thought[:200]}")
             div()
@@ -267,10 +267,18 @@ def run_agent(api_key):
                 args = {}
 
             log_t(f"-> Calling tool  : {BOLD}{name}{RESET}{TEAL}")
+            log_gr(f"  Input snippet : {json.dumps(args)[:180]}")
 
             if name not in TOOL_REGISTRY:
-                result_content = json.dumps({"status": "ESCALATE", "message": f"Unknown tool: {name}"})
-                log_r(f"Unknown tool: {name}")
+                # Feed the mistake back so the agent can correct itself.
+                result_content = json.dumps({
+                    "status":  "RETRY",
+                    "message": (
+                        f"No such tool: {name}. Available tools: "
+                        f"{', '.join(TOOL_REGISTRY.keys())}."
+                    ),
+                })
+                log_a(f"Unknown tool: {name} — returning RETRY so the agent can correct.")
                 messages.append({"role": "tool", "tool_call_id": tc["id"], "content": result_content})
                 div()
                 continue
@@ -291,22 +299,43 @@ def run_agent(api_key):
                 print()
                 sys.exit(1)
 
-            # After cost_analysis: run final steps directly with FULL data
-            if name == "cost_analysis" and result.status == AgentStatus.SUCCESS:
-                div()
-                _run_final_steps(messages, result.data)
-                return
+            if result.status == AgentStatus.SUCCESS:
+                called.append(name)
 
-            history_content = trim_for_history(name, result_content)
+            # The demo beat: the report streams as soon as the agent drafts it.
+            if name == "draft_migration_report":
+                stream_report(result)
+
+            if name == "generate_summary" and result.status == AgentStatus.SUCCESS:
+                final_result = result
+
             messages.append({
                 "role":         "tool",
                 "tool_call_id": tc["id"],
-                "content":      history_content,
+                "content":      trim_for_history(name, result_content),
             })
             div()
 
-    log_r("Agent loop ended — check output above.")
-    sys.exit(1)
+        if "generate_summary" in called:
+            break
+
+    # ── Fallback — only if the agent left required steps undone ────────────────
+    missing = [t for t in ("draft_migration_report", "generate_summary") if t not in called]
+    if missing:
+        fallback_result = _deterministic_fallback(missing)
+        final_result    = fallback_result or final_result
+
+    if final_result is None:
+        log_r("Agent loop ended without a final result — check output above.")
+        sys.exit(1)
+
+    banner("NemoClaw Eval Agent — Analysis Complete")
+    log_g(f"Status  : {final_result.status.value}")
+    log_g(f"Summary : {final_result.message[:400]}")
+    if not missing:
+        log_gr(f"All 6 steps executed by the agent — {len(called)} successful tool calls.")
+    print()
+
 
 def main():
     parser = argparse.ArgumentParser(description="AirClaw model eval demo runner")
@@ -321,9 +350,9 @@ def main():
         shutil.copy(CLEAN, UPSTREAM)
         print(f"{TEAL}[setup] Clean eval data loaded — {UPSTREAM.name}{RESET}\n")
 
-    api_key = os.environ.get("NIM_API_KEY")
-    if not api_key:
-        print(f"{RED}Error: NIM_API_KEY not set.{RESET}")
+    api_key, key_error = get_nim_key()
+    if key_error:
+        print(f"{RED}Error: {key_error}{RESET}")
         sys.exit(1)
 
     run_agent(api_key)

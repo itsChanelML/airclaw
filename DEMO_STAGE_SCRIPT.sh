@@ -1,5 +1,5 @@
 # AirClaw — Stage Demo Script
-# AI DevSummit NYC · June 9–10, 2026
+# DevFest DC · August 2026
 # ─────────────────────────────────────────────────────────────
 # HOW TO USE THIS:
 #   Open this file in VS Code BEFORE you go on stage.
@@ -12,8 +12,10 @@
 # PRE-SHOW SETUP (do this in the green room / before doors open)
 # ══════════════════════════════════════════════════════════════
 
-# 1. Set your NIM key (if not already in .env)
-export NIM_API_KEY=your_key_here
+# 1. Run the pre-show check. This is the single most important pre-flight step:
+#    it makes a live tool call, so it catches a retired model, a bad key, or
+#    broken data before the room does. Exits non-zero if you are not ready.
+python3 preflight.py
 
 # 2. Confirm clean data is loaded for both pipelines
 cp data/nyc_311_clean.csv      data/nyc_311_upstream.csv
@@ -48,11 +50,21 @@ python3 run_model_eval.py
 python3 run_demo.py
 
 # WHAT TO SAY while logs stream:
-# "Watch the logs. The agent is validating schema first — it decided to do that, I didn't script it."
+# "Schema validation runs first — that's the contract. Everything after it is the
+#  agent's call."
 # "Now it's calling check_sla_breaches..."
 # "29 open requests past their SLA window. Seven agencies affected."
+# "And it's checking overnight volume against the seven-day baseline —
+#  illegal parking up 271%, noise complaints up 232%. Those alerts route to
+#  NYPD's briefing, because those are NYPD's complaint types."
+# "Nobody told it which agencies matter. It read the breach counts and picked
+#  who gets a briefing — those supervisor names came out of the data, not my prompt."
 # [When briefing streams] → STOP TALKING. Let the room read it. Count 8 seconds silently.
 # "That email is ready to send. Lt. Webb didn't write it. It's 6:04am."
+#
+# IF YOU SEE [fallback] IN THE LOGS: the agent stalled and the run finished
+# deterministically. Say nothing about it, finish the beat on the briefing, and
+# move on — the briefing on screen is still real output from the real tool.
 
 # --- Beat 2: Failure beat ---
 # Switch to Tab 2. Say: "Now let me break it."
@@ -64,6 +76,26 @@ python3 run_demo.py --break
 # [Let ESCALATE message render completely]
 # "Schema drift detected. Missing field. Likely rename. Pipeline halted. Audit trail preserved."
 # "That pipeline told you exactly what broke and why — without a single conditional you wrote."
+
+
+# --- Beat 3 (optional): Audience input ---
+# Take a real question from the room, phrase it as a goal, and let the agent
+# plan its own approach. It picks query_requests, filters the data, and answers
+# in two sentences with the actual numbers — including calling out ties.
+# Hit Enter:
+# python3 run_demo.py --goal "Which agency has the most overdue requests in Brooklyn?"
+#
+# WHAT TO SAY: "I did not write a code path for that question. It chose the tool,
+# chose the filters, and answered from the data."
+#
+# SAFE QUESTIONS (verified against the data — all answerable by query_requests):
+#   "Which borough has the most breaches?"                  -> BRONX, 9 of 29
+#   "Which agency has the most overdue requests in Brooklyn?" -> DSNY, 2, tied with NYPD
+#   "What complaint type is most common among overdue cases?"  -> 5-way tie at 3
+#
+# RISKY: anything needing math the tools do not do (averages, trends over time,
+# per-capita). The agent will say it cannot rather than invent a number — which
+# is a fine answer, but do not set it up as the finale.
 
 
 # ══════════════════════════════════════════════════════════════
@@ -83,8 +115,9 @@ python3 run_model_eval.py
 # "Detecting regressions — where does Model B actually get worse?"
 # "Running cost analysis at 100k prompts a month..."
 # [When migration report streams] → STOP TALKING. Let the room read it. Count 8 seconds.
-# Read the recommendation out loud: "PROCEED PARTIALLY — migrate code generation and RAG.
-#  Hold customer support. 66% cheaper. 50% faster. $9,272 annual savings."
+# Read the recommendation out loud: "PROCEED PARTIALLY — migrate code generation.
+#  Hold RAG QA and customer support. 66% cheaper. 50% faster. $9,272 annual savings."
+#  (Verified against the tools — those four numbers are what the report prints.)
 # "A Sr Engineer used to spend 2-3 days producing that report. AirClaw just did it."
 
 # --- Beat 2: Failure beat ---
@@ -123,9 +156,9 @@ python3 run_model_eval.py --break
 #   → Open browser tab with pre-recorded backup (record these before the conference)
 #   → Say "let me show you the run from this morning" — no apology, just play it
 
-# Agent writes report as text instead of calling tool:
-#   → This is a known failure mode — just re-run
-#   → python3 run_model_eval.py   (Tab 3, hit Enter again)
+# Agent writes report as text instead of calling the tool:
+#   → The run still completes — you will see [fallback] lines and the real report.
+#   → Don't draw attention to it. If you want a clean run, hit Enter again.
 
 # Wrong data file loaded:
 #   → Reset clean data and rerun
@@ -133,8 +166,30 @@ cp data/nyc_311_clean.csv    data/nyc_311_upstream.csv
 cp data/model_eval_clean.csv data/model_eval_upstream.csv
 #   → Then rerun whichever demo
 
-# NIM_API_KEY not set:
-export NIM_API_KEY=your_key_here
+# Anything unexplained — run the pre-show check, it names the problem:
+python3 preflight.py --no-airflow
+
+# Model retired by NVIDIA (HTTP 410 Gone on every call — this happened on
+# 2026-08-26). List what is currently served and set NIM_MODEL in .env:
+curl -s https://integrate.api.nvidia.com/v1/models \
+  -H "Authorization: Bearer $NIM_API_KEY" | grep -o '"id":"[^"]*"'
+
+
+# ══════════════════════════════════════════════════════════════
+# OPTIONAL — AIRFLOW UI ON SCREEN
+# ══════════════════════════════════════════════════════════════
+#
+# Pre-show, in a fifth terminal tab:
+#   ./run_airflow.sh --check     # confirm both DAGs parse — do this first
+#   ./run_airflow.sh             # UI at http://localhost:8080
+#
+# On stage, trigger from the UI or:
+#   airflow dags trigger airclaw_demo
+#   airflow dags trigger model_eval_demo
+#
+# The briefings and the migration report stream into the task logs, so open the
+# nemoclaw_agent task log and let the room watch it fill in. Say: "same agent,
+# same tools — Airflow just decides when it runs and what happens if it fails."
 
 
 # ══════════════════════════════════════════════════════════════
